@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import { PhoneFrame } from './src/components/PhoneFrame';
 import { queryClient } from './src/lib/queryClient';
 import { OnboardingProvider } from './src/lib/onboardingStore';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
@@ -10,14 +11,16 @@ import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <OnboardingProvider>
-          <NavigationContainer>
-            <OnboardingNavigator />
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </OnboardingProvider>
-      </SafeAreaProvider>
+      <PhoneFrame>
+        <SafeAreaProvider>
+          <OnboardingProvider>
+            <NavigationContainer>
+              <OnboardingNavigator />
+              <StatusBar style="auto" />
+            </NavigationContainer>
+          </OnboardingProvider>
+        </SafeAreaProvider>
+      </PhoneFrame>
     </QueryClientProvider>
   );
 }
