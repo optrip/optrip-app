@@ -85,12 +85,10 @@ npx serve dist  # 로컬에서 결과 확인
 ### GitHub Pages 자동 배포
 
 `main` 브랜치에 push하면 GitHub Actions가 빌드 후 자동 배포합니다.
+간단하게 확인하거나, 개발레포 세팅이 안되어 있는 분께 보여드리긴 좋지만, 실제 native 앱과 약간의 동작 차이가 있을수 있습니다.
 
 - 워크플로우: `.github/workflows/deploy.yml`
 - 배포 URL: **https://optrip.github.io/optrip-app/**
-
-> **최초 1회 수동 설정 필요**:
-> repo Settings → Pages → **Source**를 `GitHub Actions`로 변경
 
 빌드 진행 상황은 [Actions 탭](https://github.com/optrip/optrip-app/actions)에서 확인.
 
