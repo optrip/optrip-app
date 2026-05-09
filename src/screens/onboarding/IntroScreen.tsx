@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -10,20 +10,31 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Intro'>;
 
 export function IntroScreen() {
   const navigation = useNavigation<Nav>();
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const t = setTimeout(() => navigation.replace('InfoNotice'), 1800);
-    return () => clearTimeout(t);
-  }, [navigation]);
+    const useNative = Platform.OS !== 'web';
+    const seq = Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: useNative }),
+      Animated.delay(1100),
+      Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: useNative }),
+    ]);
+    seq.start(({ finished }) => {
+      if (finished) navigation.replace('InfoNotice');
+    });
+    return () => seq.stop();
+  }, [navigation, opacity]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.line}>
-        <Text style={styles.brand}>OpTrip</Text>
-        <Text>은</Text>
-      </Text>
-      <Text style={styles.line}>사용자 맞춤형</Text>
-      <Text style={styles.line}>여행지 추천 서비스예요</Text>
+      <Animated.View style={[styles.block, { opacity }]}>
+        <Text style={styles.line}>
+          <Text style={styles.brand}>OpTrip</Text>
+          <Text>은</Text>
+        </Text>
+        <Text style={styles.line}>사용자 맞춤형</Text>
+        <Text style={styles.line}>여행지 추천 서비스예요</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -35,6 +46,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.screenPaddingX,
+  },
+  block: {
+    alignItems: 'center',
   },
   line: {
     fontSize: 28,

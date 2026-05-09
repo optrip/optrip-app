@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,9 +8,6 @@ import { BackLink } from '../../components/BackLink';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { colors, layout, radius, spacing } from '../../lib/theme';
 import type { Job, OnboardingStackParamList } from '../../navigation/types';
-
-const SCREEN_W = Dimensions.get('window').width;
-const CARD_SIZE = Math.floor((SCREEN_W - spacing.screenPaddingX * 2 - layout.cardGap) / 2);
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'JobSelect'>;
 
@@ -25,11 +23,16 @@ const OPTIONS: { value: Job; label: string }[] = [
 export function JobSelectScreen() {
   const navigation = useNavigation<Nav>();
   const { profile, setJob } = useOnboarding();
+  const [cardSize, setCardSize] = useState<number | null>(null);
+
+  const onGridLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    const next = Math.floor((w - layout.cardGap) / 2);
+    if (next !== cardSize) setCardSize(next);
+  };
 
   const select = (j: Job) => {
     setJob(j);
-    // 온보딩 끝 — 일단 다음 단계는 추후 메인 화면 연결.
-    // 임시로 첫 화면으로 reset 또는 alert. 여기서는 reset.
     navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
   };
 
@@ -42,19 +45,24 @@ export function JobSelectScreen() {
       <View style={styles.body}>
         <Text style={styles.title}>직업을 선택해주세요</Text>
 
-        <View style={styles.grid}>
-          {OPTIONS.map(({ value, label }) => {
-            const selected = profile.job === value;
-            return (
-              <Pressable
-                key={value}
-                onPress={() => select(value)}
-                style={[styles.card, selected && styles.cardSelected]}
-              >
-                <Text style={styles.cardText}>{label}</Text>
-              </Pressable>
-            );
-          })}
+        <View style={styles.grid} onLayout={onGridLayout}>
+          {cardSize !== null &&
+            OPTIONS.map(({ value, label }) => {
+              const selected = profile.job === value;
+              return (
+                <Pressable
+                  key={value}
+                  onPress={() => select(value)}
+                  style={[
+                    styles.card,
+                    { width: cardSize, height: cardSize },
+                    selected && styles.cardSelected,
+                  ]}
+                >
+                  <Text style={styles.cardText}>{label}</Text>
+                </Pressable>
+              );
+            })}
         </View>
       </View>
     </SafeAreaView>
@@ -86,8 +94,6 @@ const styles = StyleSheet.create({
     rowGap: layout.cardGap,
   },
   card: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
     borderRadius: radius.card,
     backgroundColor: colors.cardDefault,
     alignItems: 'center',

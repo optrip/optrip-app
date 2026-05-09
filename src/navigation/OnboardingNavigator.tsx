@@ -16,7 +16,7 @@ export function OnboardingNavigator() {
   return (
     <Stack.Navigator
       initialRouteName="Welcome"
-      screenOptions={{ headerShown: false, animation: 'fade' }}
+      screenOptions={{ headerShown: false, animation: 'none' }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Intro" component={IntroScreen} />

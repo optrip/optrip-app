@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -10,16 +10,27 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'InfoNotice'>;
 
 export function InfoNoticeScreen() {
   const navigation = useNavigation<Nav>();
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const t = setTimeout(() => navigation.replace('NameInput'), 1800);
-    return () => clearTimeout(t);
-  }, [navigation]);
+    const useNative = Platform.OS !== 'web';
+    const seq = Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: useNative }),
+      Animated.delay(1100),
+      Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: useNative }),
+    ]);
+    seq.start(({ finished }) => {
+      if (finished) navigation.replace('NameInput');
+    });
+    return () => seq.stop();
+  }, [navigation, opacity]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.line}>더 정교한 추천을 위해</Text>
-      <Text style={styles.line}>회원님의 정보가 필요해요</Text>
+      <Animated.View style={[styles.block, { opacity }]}>
+        <Text style={styles.line}>더 정교한 추천을 위해</Text>
+        <Text style={styles.line}>회원님의 정보가 필요해요</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -31,6 +42,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.screenPaddingX,
+  },
+  block: {
+    alignItems: 'center',
   },
   line: {
     fontSize: 28,
