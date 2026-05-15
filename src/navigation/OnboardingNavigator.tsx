@@ -8,6 +8,11 @@ import { GenderSelectScreen } from '../screens/onboarding/GenderSelectScreen';
 import { BirthYearScreen } from '../screens/onboarding/BirthYearScreen';
 import { JobSelectScreen } from '../screens/onboarding/JobSelectScreen';
 import { HomeScreen } from '../screens/HomeScreen';
+import { ScheduleScreen } from '../screens/planning/ScheduleScreen';
+import { CompanionScreen } from '../screens/planning/CompanionScreen';
+import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
+import { LoadingScreen } from '../screens/planning/LoadingScreen';
+import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
 
 import type { OnboardingStackParamList } from './types';
 
@@ -46,6 +51,27 @@ export function OnboardingNavigator() {
         name="Home"
         component={HomeScreen}
         options={{ headerShown: false, animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="Schedule"
+        component={ScheduleScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Companion"
+        component={CompanionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Preference"
+        component={PreferenceScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen name="Loading" component={LoadingScreen} options={{ animation: 'fade' }} />
+      <Stack.Screen
+        name="Recommendation"
+        component={RecommendationScreen}
+        options={{ animation: 'fade' }}
       />
     </Stack.Navigator>
   );

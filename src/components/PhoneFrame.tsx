@@ -23,11 +23,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   const margin = 24;
   const totalW = PHONE_WIDTH + BEZEL * 2;
   const totalH = PHONE_HEIGHT + BEZEL * 2;
-  const scale = Math.min(
-    (width - margin * 2) / totalW,
-    (height - margin * 2) / totalH,
-    1,
-  );
+  const scale = Math.min((width - margin * 2) / totalW, (height - margin * 2) / totalH, 1);
 
   return (
     <View style={page}>
