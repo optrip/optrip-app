@@ -2,6 +2,18 @@ export type Gender = 'female' | 'male';
 
 export type Job = 'student' | 'employee' | 'self' | 'homemaker' | 'unemployed' | 'other';
 
+export type Companion = 'alone' | 'friend' | 'partner' | 'parents' | 'kid' | 'other';
+
+export type Preference =
+  | 'healing'
+  | 'food'
+  | 'mood'
+  | 'nature'
+  | 'history'
+  | 'activity'
+  | 'culture'
+  | 'cafe';
+
 export type OnboardingStackParamList = {
   Welcome: undefined;
   Intro: undefined;
@@ -13,4 +25,9 @@ export type OnboardingStackParamList = {
   Home: undefined;
   MyTrips: undefined;
   Budget: undefined;
+  Schedule: undefined;
+  Companion: undefined;
+  Preference: undefined;
+  Loading: undefined;
+  Recommendation: undefined;
 };

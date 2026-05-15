@@ -1,11 +1,18 @@
 export const colors = {
   background: '#FFFFFF',
   textPrimary: '#000000',
+  textStrong: '#111111',
   textSecondary: '#767676',
   cardSelected: '#A4BDED',
   cardDefault: '#FFFFFF',
   cardShadow: 'rgba(0, 0, 0, 0.08)',
   divider: '#000000',
+  actionPrimary: '#0088FF',
+  actionSecondary: '#EEEEEE',
+  progressTrack: '#EEEEEE',
+  progressFill: '#007AFF',
+  rangeEnd: '#0088FF',
+  rangeMid: '#D4E8FF',
 } as const;
 
 export const typography = {

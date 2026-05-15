@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, Platform, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -7,6 +7,8 @@ import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Intro'>;
+
+const LOGO = require('../../../assets/logo/optrip-medium.png');
 
 export function IntroScreen() {
   const navigation = useNavigation<Nav>();
@@ -28,10 +30,10 @@ export function IntroScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.block, { opacity }]}>
-        <Text style={styles.line}>
-          <Text style={styles.brand}>OpTrip</Text>
-          <Text>은</Text>
-        </Text>
+        <View style={styles.firstLine}>
+          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.line}>은</Text>
+        </View>
         <Text style={styles.line}>사용자 맞춤형</Text>
         <Text style={styles.line}>여행지 추천 서비스예요</Text>
       </Animated.View>
@@ -50,16 +52,20 @@ const styles = StyleSheet.create({
   block: {
     alignItems: 'center',
   },
+  firstLine: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  logo: {
+    width: 110,
+    height: 42,
+    marginRight: 2,
+  },
   line: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
     textAlign: 'center',
     lineHeight: 40,
-  },
-  brand: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.textPrimary,
   },
 });

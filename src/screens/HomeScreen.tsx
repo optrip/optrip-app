@@ -1,30 +1,50 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useOnboarding } from '../lib/onboardingStore';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  SafeAreaView,
+  Image,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+
+import { useOnboarding } from '../lib/onboardingStore';
+import type { OnboardingStackParamList } from '../navigation/types';
+
+const LOGO = require('../../assets/logo/optrip-small.png');
+
+type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Home'>;
 
 export const HomeScreen = () => {
   const { profile } = useOnboarding();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<Nav>();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.logoText}>OpTrip</Text>
+        <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
       </View>
 
       <View style={styles.content}>
         <Text style={styles.welcomeText}>{profile.name}님, 안녕하세요</Text>
 
         <View style={styles.mainCard}>
-          <ImageBackground 
-            source={{ uri: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80' }} 
+          <ImageBackground
+            source={{
+              uri: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80',
+            }}
             style={styles.cardBackground}
             imageStyle={{ borderRadius: 30, opacity: 0.4 }}
           >
-            <Text style={styles.cardTitle}>어디로{"\n"}가 볼까요?</Text>
-            
-            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Budget')}>
+            <Text style={styles.cardTitle}>어디로{'\n'}가 볼까요?</Text>
+
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Budget')}
+            >
               <Text style={styles.buttonText}>계획 세우기</Text>
               <Ionicons name="chevron-forward" size={20} color="black" />
             </TouchableOpacity>
@@ -55,7 +75,7 @@ export const HomeScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   header: { paddingHorizontal: 20, paddingTop: 40 },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#000' },
+  logoImage: { width: 78, height: 30 },
   content: { flex: 1, paddingHorizontal: 25, paddingTop: 40 },
   welcomeText: { fontSize: 22, fontWeight: '600', marginBottom: 30 },
   mainCard: {
@@ -96,5 +116,5 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 10,
     elevation: 5,
-  }
+  },
 });

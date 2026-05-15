@@ -23,21 +23,17 @@ export const BudgetScreen = () => {
 
       <View style={styles.container}>
         <Text style={styles.questionText}>예산이 얼마인가요?</Text>
-        
+
         <View style={styles.optionsContainer}>
           {BUDGET_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
-              style={[
-                styles.optionButton,
-                selectedId === option.id && styles.selectedOption
-              ]}
+              style={[styles.optionButton, selectedId === option.id && styles.selectedOption]}
               onPress={() => setSelectedId(option.id)}
             >
-              <Text style={[
-                styles.optionText,
-                selectedId === option.id && styles.selectedOptionText
-              ]}>
+              <Text
+                style={[styles.optionText, selectedId === option.id && styles.selectedOptionText]}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -45,15 +41,15 @@ export const BudgetScreen = () => {
         </View>
 
         {/* 하단 버튼 */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.nextButton, !selectedId && styles.disabledButton]}
-          onPress={() => selectedId && alert('일정정보 화면으로 연결 예정..')}
+          onPress={() => selectedId && navigation.navigate('Schedule')}
           disabled={!selectedId}
         >
           <Text style={styles.nextButtonText}>다음</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.skipButton}>
+        <TouchableOpacity style={styles.skipButton} onPress={() => navigation.navigate('Schedule')}>
           <Text style={styles.skipButtonText}>건너뛰기</Text>
         </TouchableOpacity>
       </View>

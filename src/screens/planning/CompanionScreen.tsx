@@ -1,64 +1,62 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, type LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, StyleSheet, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { BackLink } from '../../components/BackLink';
-import { useOnboarding } from '../../lib/onboardingStore';
+import { ChevronBackButton } from '../../components/ChevronBackButton';
+import { SkipLink } from '../../components/SkipLink';
+import { usePlanning } from '../../lib/planningStore';
 import { colors, layout, radius, spacing } from '../../lib/theme';
-import type { Job, OnboardingStackParamList } from '../../navigation/types';
+import type { Companion, OnboardingStackParamList } from '../../navigation/types';
 
-type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'JobSelect'>;
+type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Companion'>;
 
-const OPTIONS: { value: Job; label: string }[] = [
-  { value: 'student', label: '학생' },
-  { value: 'employee', label: '직장인' },
-  { value: 'self', label: '자영업' },
-  { value: 'homemaker', label: '주부' },
-  { value: 'unemployed', label: '무직' },
+const OPTIONS: { value: Companion; label: string }[] = [
+  { value: 'alone', label: '혼자' },
+  { value: 'friend', label: '친구와' },
+  { value: 'partner', label: '애인과' },
+  { value: 'parents', label: '부모님과' },
+  { value: 'kid', label: '아이와' },
   { value: 'other', label: '기타' },
 ];
 
-export function JobSelectScreen() {
+export function CompanionScreen() {
   const navigation = useNavigation<Nav>();
-  const { profile, setJob } = useOnboarding();
-  const [cardSize, setCardSize] = useState<number | null>(null);
+  const { plan, setCompanion } = usePlanning();
+  const [cardWidth, setCardWidth] = useState<number | null>(null);
 
   const onGridLayout = (e: LayoutChangeEvent) => {
     const w = e.nativeEvent.layout.width;
     const next = Math.floor((w - layout.cardGap) / 2);
-    if (next !== cardSize) setCardSize(next);
+    if (next !== cardWidth) setCardWidth(next);
   };
 
-  const select = (j: Job) => {
-    setJob(j);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Home' as any }],
-    });
+  const select = (c: Companion) => {
+    setCompanion(c);
+    navigation.navigate('Preference');
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <BackLink />
+        <ChevronBackButton />
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.title}>직업을 선택해주세요</Text>
+        <Text style={styles.title}>누구와 가나요?</Text>
 
         <View style={styles.grid} onLayout={onGridLayout}>
-          {cardSize !== null &&
+          {cardWidth !== null &&
             OPTIONS.map(({ value, label }) => {
-              const selected = profile.job === value;
+              const selected = plan.companion === value;
               return (
                 <Pressable
                   key={value}
                   onPress={() => select(value)}
                   style={[
                     styles.card,
-                    { width: cardSize, height: cardSize },
+                    { width: cardWidth, height: cardWidth * 0.72 },
                     selected && styles.cardSelected,
                   ]}
                 >
@@ -66,6 +64,10 @@ export function JobSelectScreen() {
                 </Pressable>
               );
             })}
+        </View>
+
+        <View style={styles.bottom}>
+          <SkipLink onPress={() => navigation.navigate('Preference')} />
         </View>
       </View>
     </SafeAreaView>
@@ -76,16 +78,16 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   header: {
     paddingHorizontal: spacing.screenPaddingX,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
   },
   body: {
     flex: 1,
     paddingHorizontal: spacing.screenPaddingX,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.md,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '500',
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.xl,
@@ -111,8 +113,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardSelected,
   },
   cardText: {
-    fontSize: 28,
-    fontWeight: '500',
+    fontSize: 24,
+    fontWeight: '400',
     color: colors.textPrimary,
+  },
+  bottom: {
+    marginTop: 'auto',
   },
 });
