@@ -7,28 +7,31 @@ import {
   ImageBackground,
   TouchableOpacity,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+
+const LOGO = require('../../assets/logo/optrip-small.png');
 
 const DUMMY_TRIPS = [
   {
     id: 'jeju',
     title: '제주도',
     desc: '3월 30일 ~ 4월 2일 · 혼자 · 50만원 · 여유로운',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
+    image: 'https://picsum.photos/seed/jeju/800/600',
   },
   {
     id: 'gyeongju',
     title: '경주',
     desc: '3박 4일 · 가족과 · 100만원 · 역사적인',
-    image: 'https://images.unsplash.com/photo-1590660309054-d4f19904269e?w=800',
+    image: 'https://picsum.photos/seed/gyeongju/800/600',
   },
   {
     id: 'mokpo',
     title: '목포',
     desc: '3박 4일 · 가족과 · 100만원 · 역사적인',
-    image: 'https://images.unsplash.com/photo-1594191316043-f66710b7431e?w=800',
+    image: 'https://picsum.photos/seed/mokpo/800/600',
   },
 ];
 
@@ -39,7 +42,7 @@ export const MyTripsScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       {/* 로고 */}
       <View style={styles.header}>
-        <Text style={styles.logoText}>OpTrip</Text>
+        <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
       </View>
 
       <ScrollView style={styles.content}>
@@ -47,7 +50,6 @@ export const MyTripsScreen = () => {
 
         {DUMMY_TRIPS.map((trip) => (
           <View key={trip.id} style={styles.card}>
-            {/* (이미지가 안떠요..) */}
             <ImageBackground
               source={{ uri: trip.image }}
               style={styles.cardBackground}
@@ -88,7 +90,7 @@ export const MyTripsScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   header: { paddingHorizontal: 20, paddingTop: 60 },
-  logoText: { fontSize: 24, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
+  logoImage: { width: 78, height: 30 },
   content: { flex: 1, paddingHorizontal: 25 },
   titleText: { fontSize: 26, fontWeight: 'bold', marginTop: 30, marginBottom: 20 },
   card: {
