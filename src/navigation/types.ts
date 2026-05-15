@@ -11,4 +11,6 @@ export type OnboardingStackParamList = {
   BirthYear: undefined;
   JobSelect: undefined;
   Home: undefined;
+  MyTrips: undefined;
+  Budget: undefined;
 };
