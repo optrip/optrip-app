@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-na
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { usePlanning } from '../../lib/planningStore';
+
 const BUDGET_OPTIONS = [
   { id: '1', label: '10만원 이하', value: '0-10' },
   { id: '2', label: '10만원 ~ 50만원', value: '10-50' },
@@ -12,7 +14,20 @@ const BUDGET_OPTIONS = [
 
 export const BudgetScreen = () => {
   const navigation = useNavigation<any>();
+  const { setBudget } = usePlanning();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleNext = () => {
+    if (!selectedId) return;
+    const selected = BUDGET_OPTIONS.find((o) => o.id === selectedId);
+    setBudget(selected?.label ?? null);
+    navigation.navigate('Schedule');
+  };
+
+  const handleSkip = () => {
+    setBudget(null);
+    navigation.navigate('Schedule');
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -43,13 +58,13 @@ export const BudgetScreen = () => {
         {/* 하단 버튼 */}
         <TouchableOpacity
           style={[styles.nextButton, !selectedId && styles.disabledButton]}
-          onPress={() => selectedId && navigation.navigate('Schedule')}
+          onPress={handleNext}
           disabled={!selectedId}
         >
           <Text style={styles.nextButtonText}>다음</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.skipButton} onPress={() => navigation.navigate('Schedule')}>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
           <Text style={styles.skipButtonText}>건너뛰기</Text>
         </TouchableOpacity>
       </View>

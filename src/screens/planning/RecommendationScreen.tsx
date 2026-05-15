@@ -33,6 +33,7 @@ export function RecommendationScreen() {
   const summary = [
     plan.noSpecificDate ? '일정 미정' : formatRange(plan.dateRange.start, plan.dateRange.end),
     plan.companion ? COMPANION_LABEL[plan.companion] : null,
+    plan.budget,
     plan.preferences.length > 0 ? PREFERENCE_LABEL[plan.preferences[0]] : null,
   ]
     .filter(Boolean)

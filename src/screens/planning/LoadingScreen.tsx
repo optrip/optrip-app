@@ -33,7 +33,7 @@ export function LoadingScreen() {
 
   useEffect(() => {
     const body: RecommendRequest = {
-      budget: '',
+      budget: plan.budget ?? '',
       duration: durationText(plan.noSpecificDate, plan.dateRange),
       startDate: plan.dateRange.start ?? '',
       endDate: plan.dateRange.end ?? plan.dateRange.start ?? '',
