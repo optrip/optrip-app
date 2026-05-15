@@ -33,7 +33,10 @@ export function JobSelectScreen() {
 
   const select = (j: Job) => {
     setJob(j);
-    navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    navigation.reset({ 
+      index: 0, 
+      routes: [{ name: 'Home' as any }] 
+    });
   };
 
   return (

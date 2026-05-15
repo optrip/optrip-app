@@ -10,4 +10,5 @@ export type OnboardingStackParamList = {
   GenderSelect: undefined;
   BirthYear: undefined;
   JobSelect: undefined;
+  Home: undefined;
 };

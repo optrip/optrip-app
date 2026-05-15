@@ -7,6 +7,7 @@ import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
 import { GenderSelectScreen } from '../screens/onboarding/GenderSelectScreen';
 import { BirthYearScreen } from '../screens/onboarding/BirthYearScreen';
 import { JobSelectScreen } from '../screens/onboarding/JobSelectScreen';
+import { HomeScreen } from '../screens/HomeScreen';
 
 import type { OnboardingStackParamList } from './types';
 
@@ -40,6 +41,11 @@ export function OnboardingNavigator() {
         name="JobSelect"
         component={JobSelectScreen}
         options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ headerShown: false, animation: 'fade' }}
       />
     </Stack.Navigator>
   );
