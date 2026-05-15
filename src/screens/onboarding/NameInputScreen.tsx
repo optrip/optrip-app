@@ -1,18 +1,11 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { BackLink } from '../../components/BackLink';
+import { PrimaryButton } from '../../components/PrimaryButton';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
@@ -55,14 +48,9 @@ export function NameInputScreen() {
           />
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={submit}
-          style={[styles.next, !value.trim() && styles.nextDisabled]}
-          disabled={!value.trim()}
-        >
-          <Text style={styles.nextText}>다음</Text>
-        </Pressable>
+        <View style={styles.footer}>
+          <PrimaryButton label="다음" onPress={submit} disabled={!value.trim()} />
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -94,19 +82,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     textAlign: 'center',
   },
-  next: {
-    margin: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: 12,
-    backgroundColor: colors.cardSelected,
-    alignItems: 'center',
-  },
-  nextDisabled: {
-    opacity: 0.4,
-  },
-  nextText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
+  footer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
 });

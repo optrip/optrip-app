@@ -23,11 +23,11 @@ const styles = StyleSheet.create({
   wrap: {
     alignSelf: 'center',
     paddingVertical: spacing.sm,
+    marginTop: spacing.md,
   },
   text: {
     fontSize: 16,
-    fontWeight: '300',
-    color: colors.textSecondary,
+    color: colors.skipText,
     textDecorationLine: 'underline',
   },
 });

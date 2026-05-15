@@ -26,18 +26,19 @@ export function PrimaryButton({ label, disabled, style, ...rest }: Props) {
 
 const styles = StyleSheet.create({
   button: {
+    width: '100%',
     backgroundColor: colors.actionPrimary,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 15,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   disabled: {
-    opacity: 0.4,
+    backgroundColor: colors.actionPrimaryDisabled,
   },
   label: {
-    fontSize: 24,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFFFFF',
   },
 });
