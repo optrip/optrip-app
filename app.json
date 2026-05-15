@@ -30,6 +30,18 @@
     },
     "experiments": {
       "baseUrl": "/optrip-app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "741d7f44-8157-4412-8135-870e22f698e6"
+      }
+    },
+    "owner": "jangdawit",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/741d7f44-8157-4412-8135-870e22f698e6"
     }
   }
 }
