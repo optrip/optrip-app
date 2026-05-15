@@ -1,47 +1,18 @@
 {
   "expo": {
-    "name": "optrip-app",
-    "slug": "optrip-app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro",
-      "output": "single"
-    },
-    "experiments": {
-      "baseUrl": "/optrip-app"
-    },
     "extra": {
       "eas": {
-        "projectId": "741d7f44-8157-4412-8135-870e22f698e6"
+        "projectId": "4c6ec320-cdfb-4aec-a84f-6a29bc0162c9"
       }
     },
-    "owner": "jangdawit",
+    "owner": "optrip",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/741d7f44-8157-4412-8135-870e22f698e6"
-    }
+      "url": "https://u.expo.dev/4c6ec320-cdfb-4aec-a84f-6a29bc0162c9"
+    },
+    "android": {},
+    "ios": {}
   }
 }
