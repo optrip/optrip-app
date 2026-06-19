@@ -13,6 +13,9 @@
       "url": "https://u.expo.dev/4c6ec320-cdfb-4aec-a84f-6a29bc0162c9"
     },
     "android": {},
-    "ios": {}
+    "ios": {},
+    "experiments": {
+      "baseUrl": "/optrip-app"
+    }
   }
 }
