@@ -23,10 +23,14 @@ import type { OnboardingStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
-export function OnboardingNavigator() {
+type Props = {
+  initialRouteName?: keyof OnboardingStackParamList;
+};
+
+export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName={initialRouteName}
       screenOptions={{ headerShown: false, animation: 'none' }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />

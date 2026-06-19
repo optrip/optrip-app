@@ -22,7 +22,7 @@ const OPTIONS: { value: Job; label: string }[] = [
 
 export function JobSelectScreen() {
   const navigation = useNavigation<Nav>();
-  const { profile, setJob } = useOnboarding();
+  const { profile, setJob, completeOnboarding } = useOnboarding();
   const [cardSize, setCardSize] = useState<number | null>(null);
 
   const onGridLayout = (e: LayoutChangeEvent) => {
@@ -33,6 +33,7 @@ export function JobSelectScreen() {
 
   const select = (j: Job) => {
     setJob(j);
+    completeOnboarding(); // 온보딩 완료 표시 (저장소에 영속)
     navigation.reset({
       index: 0,
       routes: [{ name: 'Home' as any }],

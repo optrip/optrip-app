@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Platform, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { Platform, Pressable, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
 
 const PHONE_WIDTH = 402;
 const PHONE_HEIGHT = 874;
@@ -25,8 +25,22 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   const totalH = PHONE_HEIGHT + BEZEL * 2;
   const scale = Math.min((width - margin * 2) / totalW, (height - margin * 2) / totalH, 1);
 
+  // 웹 PC 미리보기 전용: 로컬스토리지 초기화 후 새로고침 (온보딩 등 영속 데이터 리셋)
+  const resetStorage = () => {
+    try {
+      window.localStorage.clear();
+    } catch {
+      // 무시
+    }
+    window.location.reload();
+  };
+
   return (
     <View style={page}>
+      <Pressable style={resetButton} onPress={resetStorage}>
+        <Text style={resetButtonText}>로컬스토리지 초기화</Text>
+      </Pressable>
+
       <View style={[bezel, { transform: [{ scale }] }]}>
         <View style={screen}>
           <View style={contentArea}>{children}</View>
@@ -70,6 +84,26 @@ const screen: ViewStyle = {
 const contentArea: ViewStyle = {
   flex: 1,
   paddingTop: SCREEN_TOP_PADDING,
+};
+
+const resetButton: ViewStyle = {
+  position: 'absolute',
+  top: 24,
+  right: 24,
+  backgroundColor: '#ffffff',
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 10,
+  shadowColor: '#000',
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 4 },
+};
+
+const resetButtonText = {
+  fontSize: 13,
+  fontWeight: '600' as const,
+  color: '#1f1f1f',
 };
 
 const island: ViewStyle = {
