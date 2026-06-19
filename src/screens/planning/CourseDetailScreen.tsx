@@ -14,6 +14,10 @@ import type { OnboardingStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CourseDetail'>;
 type Rt = RouteProp<OnboardingStackParamList, 'CourseDetail'>;
 
+const BLUE = '#0088FF';
+const PANEL_BG = '#E8EEFB'; // 라이트 블루 패널 (figma rgba(164,190,237,0.2))
+const TAB_INACTIVE = '#EEEEEE';
+
 // 이동수단 -> 아이콘 매핑
 function transportIcon(mode: string): keyof typeof Ionicons.glyphMap {
   if (mode.includes('도보')) return 'walk-outline';
@@ -83,59 +87,76 @@ export function CourseDetailScreen() {
       {/*
         TODO(지도): Kakao Map 연동 영역.
         - 본승님 구현 예정. 지금은 빈 박스 placeholder.
-        - 마킹 데이터: course.days[].visits[].{ latitude, longitude, order, name }
-          (현재 선택된 day 의 방문지: day.visits) 를 Kakao Map 위에 순서대로 마커/폴리라인으로 표시.
+        - 마킹 데이터: day.visits[].{ latitude, longitude, order, name } 를
+          Kakao Map 위에 순서대로 마커/폴리라인으로 표시.
       */}
       <View style={styles.mapPlaceholder}>
-        <Ionicons name="map-outline" size={28} color={colors.textSecondary} />
+        <Ionicons name="map-outline" size={26} color={colors.textSecondary} />
         <Text style={styles.mapHint}>지도 영역 (Kakao Map 연동 예정)</Text>
       </View>
 
-      {/* DAY 탭 */}
+      {/* DAY 탭 (패널 위에 붙는 탭 모양) */}
       <View style={styles.tabs}>
         {course.days.map((d) => {
           const active = d.day === day.day;
           return (
-            <Pressable key={d.day} onPress={() => setSelectedDay(d.day)} style={styles.tab}>
+            <Pressable
+              key={d.day}
+              onPress={() => setSelectedDay(d.day)}
+              style={[styles.tab, active ? styles.tabActive : styles.tabInactive]}
+            >
               <Text style={[styles.tabText, active && styles.tabTextActive]}>DAY {d.day}</Text>
-              {active && <View style={styles.tabUnderline} />}
             </Pressable>
           );
         })}
       </View>
 
-      <ScrollView contentContainerStyle={styles.timeline} showsVerticalScrollIndicator={false}>
-        {day.visits.map((visit, idx) => (
-          <View key={`${visit.order}-${idx}`}>
-            <View style={styles.visitRow}>
-              <View style={styles.orderBadge}>
-                <Text style={styles.orderText}>{visit.order}</Text>
-              </View>
-              <View style={styles.visitCard}>
-                <Text style={styles.visitName}>{visit.name}</Text>
-                <Text style={styles.visitDesc}>{visit.description}</Text>
-              </View>
-            </View>
+      {/* 일자별 상세 경로 패널 */}
+      <View style={styles.panel}>
+        <ScrollView contentContainerStyle={styles.timeline} showsVerticalScrollIndicator={false}>
+          {day.visits.map((visit, idx) => {
+            const isLast = idx === day.visits.length - 1;
+            return (
+              <View key={`${visit.order}-${idx}`} style={styles.visitBlock}>
+                {/* 좌측 레일: 번호 배지 + 세로 라인 */}
+                <View style={styles.rail}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{visit.order}</Text>
+                  </View>
+                  {!isLast && <View style={styles.railLine} />}
+                </View>
 
-            {visit.transportToNext && (
-              <View style={styles.transportRow}>
-                <View style={styles.transportPill}>
-                  <Ionicons
-                    name={transportIcon(visit.transportToNext.mode)}
-                    size={16}
-                    color={colors.textStrong}
-                  />
-                  <Text style={styles.transportText}>{transportLabel(visit.transportToNext)}</Text>
+                {/* 내용: 이름 + 구분선 + 설명 + 이동수단 말풍선 */}
+                <View style={styles.content}>
+                  <Text style={styles.visitName}>{visit.name}</Text>
+                  <View style={styles.divider} />
+                  <Text style={styles.visitDesc}>{visit.description}</Text>
+
+                  {visit.transportToNext && (
+                    <View style={styles.transportRow}>
+                      <View style={styles.transportArrow} />
+                      <View style={styles.transportPill}>
+                        <Ionicons
+                          name={transportIcon(visit.transportToNext.mode)}
+                          size={18}
+                          color="#1D1B20"
+                        />
+                        <Text style={styles.transportText}>
+                          {transportLabel(visit.transportToNext)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
               </View>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* 경로 저장 */}
       <Pressable style={styles.saveBtn} onPress={onSave}>
-        <Ionicons name="bookmark-outline" size={22} color={colors.textStrong} />
+        <Ionicons name="bookmark-outline" size={26} color="#111111" />
         <Text style={styles.saveText}>경로 저장</Text>
       </Pressable>
     </SafeAreaView>
@@ -170,18 +191,18 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textStrong,
+    fontSize: 26,
+    fontWeight: '500',
+    color: '#111111',
     textAlign: 'center',
     marginTop: spacing.xs,
     marginBottom: spacing.md,
-    lineHeight: 28,
+    lineHeight: 33,
   },
   mapPlaceholder: {
-    marginHorizontal: spacing.lg,
-    height: 150,
-    borderRadius: 16,
+    marginHorizontal: 20,
+    height: 130,
+    borderRadius: 20,
     backgroundColor: '#EEF2F7',
     alignItems: 'center',
     justifyContent: 'center',
@@ -193,113 +214,148 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    gap: spacing.lg,
+    marginTop: spacing.lg,
+    marginLeft: 24,
+    gap: 7,
   },
   tab: {
-    paddingVertical: spacing.sm,
+    width: 96,
+    paddingVertical: 9,
     alignItems: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  tabActive: {
+    backgroundColor: PANEL_BG,
+  },
+  tabInactive: {
+    backgroundColor: TAB_INACTIVE,
   },
   tabText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#767676',
   },
   tabTextActive: {
-    color: colors.textStrong,
-    fontWeight: '700',
+    color: '#000000',
+    fontWeight: '600',
   },
-  tabUnderline: {
-    marginTop: 6,
-    height: 2,
-    width: '100%',
-    backgroundColor: colors.textStrong,
-    borderRadius: 1,
+  panel: {
+    flex: 1,
+    marginHorizontal: 20,
+    backgroundColor: PANEL_BG,
+    borderRadius: 20,
+    borderTopLeftRadius: 0,
   },
   timeline: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    padding: 14,
     paddingBottom: 100,
   },
-  visitRow: {
+  visitBlock: {
     flexDirection: 'row',
-    gap: spacing.md,
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
   },
-  orderBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.actionPrimary,
+  rail: {
+    width: 40,
+    alignItems: 'center',
+  },
+  badge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: BLUE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.sm,
   },
-  orderText: {
+  badgeText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'center',
   },
-  visitCard: {
+  railLine: {
     flex: 1,
-    backgroundColor: '#F4F7FD',
-    borderRadius: 16,
-    padding: spacing.md,
-    gap: spacing.xs,
+    width: 3,
+    backgroundColor: BLUE,
+    marginVertical: 2,
+  },
+  content: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: 4,
+    paddingBottom: spacing.md,
+    gap: 4,
   },
   visitName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textStrong,
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E3E3E3',
+    marginVertical: 2,
   },
   visitDesc: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: 15,
+    color: '#000000',
     lineHeight: 20,
   },
   transportRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    marginLeft: 28 + spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  transportArrow: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 7,
+    borderBottomWidth: 7,
+    borderRightWidth: 9,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: '#FFFFFF',
+    marginRight: -1,
   },
   transportPill: {
+    flex: 1,
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E3E8F0',
-    borderRadius: 50,
+    borderRadius: 20,
     paddingHorizontal: spacing.md,
-    paddingVertical: 8,
+    paddingVertical: 11,
   },
   transportText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textStrong,
+    fontSize: 15,
+    color: '#000000',
+    textAlign: 'center',
   },
   saveBtn: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#999999',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 1.6, height: 3.3 },
     elevation: 6,
   },
   saveText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.textStrong,
+    fontSize: 10,
+    fontWeight: '300',
+    color: '#111111',
   },
 });

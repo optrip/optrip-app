@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.screenPaddingX,
     paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
   },
   title: {
     fontSize: 28,
