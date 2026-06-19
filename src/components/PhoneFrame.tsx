@@ -1,5 +1,15 @@
 import type { ReactNode } from 'react';
-import { Platform, Pressable, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
+
+import { BUILT_AT, GIT_BRANCH, GIT_SHA } from '../lib/version';
 
 const PHONE_WIDTH = 402;
 const PHONE_HEIGHT = 874;
@@ -35,11 +45,43 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
     window.location.reload();
   };
 
+  // 캐시 무효화 강제 새로고침: Cache Storage / 서비스워커 제거 후 캐시버스터 쿼리로 재진입.
+  // (배포 후 최신 번들이 안 잡히는 문제 대응)
+  const hardReload = async () => {
+    try {
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      if (navigator.serviceWorker) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch {
+      // 무시
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('_', Date.now().toString());
+    window.location.replace(url.toString());
+  };
+
+  const builtTime = BUILT_AT.slice(0, 16).replace('T', ' ');
+
   return (
     <View style={page}>
-      <Pressable style={resetButton} onPress={resetStorage}>
-        <Text style={resetButtonText}>로컬스토리지 초기화</Text>
-      </Pressable>
+      <View style={devBar}>
+        <Text style={versionText}>
+          {GIT_BRANCH}@{GIT_SHA} · {builtTime}
+        </Text>
+        <View style={devButtons}>
+          <Pressable style={devButton} onPress={hardReload}>
+            <Text style={devButtonText}>강제 새로고침</Text>
+          </Pressable>
+          <Pressable style={devButton} onPress={resetStorage}>
+            <Text style={devButtonText}>로컬스토리지 초기화</Text>
+          </Pressable>
+        </View>
+      </View>
 
       <View style={[bezel, { transform: [{ scale }] }]}>
         <View style={screen}>
@@ -86,13 +128,29 @@ const contentArea: ViewStyle = {
   paddingTop: SCREEN_TOP_PADDING,
 };
 
-const resetButton: ViewStyle = {
+const devBar: ViewStyle = {
   position: 'absolute',
-  top: 24,
-  right: 24,
+  top: 20,
+  right: 20,
+  alignItems: 'flex-end',
+  gap: 8,
+};
+
+const versionText: TextStyle = {
+  fontSize: 12,
+  color: '#9a9a9a',
+  fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+};
+
+const devButtons: ViewStyle = {
+  flexDirection: 'row',
+  gap: 8,
+};
+
+const devButton: ViewStyle = {
   backgroundColor: '#ffffff',
-  paddingHorizontal: 16,
-  paddingVertical: 10,
+  paddingHorizontal: 14,
+  paddingVertical: 9,
   borderRadius: 10,
   shadowColor: '#000',
   shadowOpacity: 0.3,
@@ -100,9 +158,9 @@ const resetButton: ViewStyle = {
   shadowOffset: { width: 0, height: 4 },
 };
 
-const resetButtonText = {
+const devButtonText: TextStyle = {
   fontSize: 13,
-  fontWeight: '600' as const,
+  fontWeight: '600',
   color: '#1f1f1f',
 };
 
