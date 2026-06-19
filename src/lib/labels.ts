@@ -1,4 +1,4 @@
-import type { Companion, Preference } from '../navigation/types';
+import type { Companion, Preference, TransportMode } from '../navigation/types';
 
 export const COMPANION_LABEL: Record<Companion, string> = {
   alone: '혼자',
@@ -18,4 +18,9 @@ export const PREFERENCE_LABEL: Record<Preference, string> = {
   activity: '액티비티',
   culture: '문화체험',
   cafe: '카페투어',
+};
+
+export const TRANSPORT_LABEL: Record<TransportMode, string> = {
+  car: '자동차',
+  public: '대중교통',
 };

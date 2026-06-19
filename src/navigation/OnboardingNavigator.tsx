@@ -13,8 +13,11 @@ import { BudgetScreen } from '../screens/onboarding/BudgetScreen';
 import { ScheduleScreen } from '../screens/planning/ScheduleScreen';
 import { CompanionScreen } from '../screens/planning/CompanionScreen';
 import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
+import { TransportScreen } from '../screens/planning/TransportScreen';
 import { LoadingScreen } from '../screens/planning/LoadingScreen';
 import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
+import { CourseListScreen } from '../screens/planning/CourseListScreen';
+import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
 
 import type { OnboardingStackParamList } from './types';
 
@@ -79,11 +82,26 @@ export function OnboardingNavigator() {
         component={PreferenceScreen}
         options={{ animation: 'slide_from_right' }}
       />
+      <Stack.Screen
+        name="Transport"
+        component={TransportScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
       <Stack.Screen name="Loading" component={LoadingScreen} options={{ animation: 'fade' }} />
       <Stack.Screen
         name="Recommendation"
         component={RecommendationScreen}
         options={{ animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="CourseList"
+        component={CourseListScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="CourseDetail"
+        component={CourseDetailScreen}
+        options={{ animation: 'slide_from_right' }}
       />
     </Stack.Navigator>
   );

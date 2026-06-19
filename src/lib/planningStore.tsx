@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
-import type { RecommendResponse } from '../api/recommend';
-import type { Companion, Preference } from '../navigation/types';
+import type { CourseListResponse, RegionResponse } from '../api/recommend';
+import type { Companion, Preference, TransportMode } from '../navigation/types';
 
 export type DateRange = {
   start: string | null;
@@ -14,7 +14,10 @@ export type PlanningState = {
   noSpecificDate: boolean;
   companion: Companion | null;
   preferences: Preference[];
-  result: RecommendResponse | null;
+  transport: TransportMode | null;
+  result: RegionResponse | null; // 현재 추천된 지역 (Image #1)
+  courses: CourseListResponse | null; // 선택 지역의 코스들 (Image #2, #3)
+  excludeRegions: string[]; // 다시 받기 시 제외할, 이미 본 지역명
   error: string | null;
 };
 
@@ -25,7 +28,10 @@ type PlanningContextValue = {
   setNoSpecificDate: (v: boolean) => void;
   setCompanion: (c: Companion) => void;
   togglePreference: (p: Preference) => void;
-  setResult: (r: RecommendResponse | null) => void;
+  setTransport: (t: TransportMode) => void;
+  setResult: (r: RegionResponse | null) => void;
+  setCourses: (c: CourseListResponse | null) => void;
+  pushExcludedRegion: (name: string) => void;
   setError: (e: string | null) => void;
   reset: () => void;
 };
@@ -36,7 +42,10 @@ const initial: PlanningState = {
   noSpecificDate: false,
   companion: null,
   preferences: [],
+  transport: null,
   result: null,
+  courses: null,
+  excludeRegions: [],
   error: null,
 };
 
@@ -58,13 +67,24 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
         })),
       setCompanion: (companion) => setPlan((p) => ({ ...p, companion })),
       togglePreference: (pref) =>
-        setPlan((p) => ({
-          ...p,
-          preferences: p.preferences.includes(pref)
-            ? p.preferences.filter((x) => x !== pref)
-            : [...p.preferences, pref],
-        })),
-      setResult: (result) => setPlan((p) => ({ ...p, result, error: null })),
+        setPlan((p) => {
+          if (p.preferences.includes(pref)) {
+            return { ...p, preferences: p.preferences.filter((x) => x !== pref) };
+          }
+          // 최대 3개까지만 선택 가능
+          if (p.preferences.length >= 3) return p;
+          return { ...p, preferences: [...p.preferences, pref] };
+        }),
+      setTransport: (transport) => setPlan((p) => ({ ...p, transport })),
+      // 새 지역을 받으면 이전에 보던 코스는 무효화
+      setResult: (result) => setPlan((p) => ({ ...p, result, courses: null, error: null })),
+      setCourses: (courses) => setPlan((p) => ({ ...p, courses })),
+      pushExcludedRegion: (name) =>
+        setPlan((p) =>
+          p.excludeRegions.includes(name)
+            ? p
+            : { ...p, excludeRegions: [...p.excludeRegions, name] },
+        ),
       setError: (error) => setPlan((p) => ({ ...p, error, result: null })),
       reset: () => setPlan(initial),
     }),

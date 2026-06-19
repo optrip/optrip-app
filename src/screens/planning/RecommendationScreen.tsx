@@ -1,10 +1,20 @@
-import { View, Text, Pressable, StyleSheet, ImageBackground, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ImageBackground,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 
+import { useRecommendRegion, useRecommendCourses } from '../../api/useRecommend';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { COMPANION_LABEL, PREFERENCE_LABEL } from '../../lib/labels';
+import { buildRecommendRequest } from '../../lib/buildRequest';
 import { usePlanning } from '../../lib/planningStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
@@ -28,7 +38,11 @@ function formatRange(start: string | null, end: string | null) {
 export function RecommendationScreen() {
   const navigation = useNavigation<Nav>();
   const { profile } = useOnboarding();
-  const { plan } = usePlanning();
+  const { plan, setResult, setCourses, setError, pushExcludedRegion } = usePlanning();
+
+  const regionMut = useRecommendRegion();
+  const coursesMut = useRecommendCourses();
+  const busy = regionMut.isPending || coursesMut.isPending;
 
   const summary = [
     plan.noSpecificDate ? '일정 미정' : formatRange(plan.dateRange.start, plan.dateRange.end),
@@ -41,6 +55,34 @@ export function RecommendationScreen() {
 
   const displayName = profile.name || 'ㅇㅇ';
   const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+
+  // 다른 지역으로 다시 추천받기
+  const reroll = () => {
+    const current = plan.result?.regionName;
+    const body = buildRecommendRequest(plan);
+    if (current) body.excludeRegions = [...(body.excludeRegions ?? []), current];
+    regionMut.mutate(body, {
+      onSuccess: (data) => {
+        if (current) pushExcludedRegion(current);
+        setResult(data);
+      },
+      onError: (err) => setError(err.message || '추천 요청에 실패했어요'),
+    });
+  };
+
+  // 선택한 지역의 코스들을 한 번에 생성 -> 코스 선택 화면으로
+  const showCourses = () => {
+    if (!plan.result) return;
+    const body = buildRecommendRequest(plan);
+    body.regionName = plan.result.regionName;
+    coursesMut.mutate(body, {
+      onSuccess: (data) => {
+        setCourses(data);
+        navigation.navigate('CourseList');
+      },
+      onError: (err) => setError(err.message || '코스를 불러오지 못했어요'),
+    });
+  };
 
   if (plan.error) {
     return (
@@ -73,15 +115,19 @@ export function RecommendationScreen() {
     );
   }
 
-  const { regionName, description, reason } = plan.result;
-
-  const showDetail = () => {
-    const lines = [description, reason].filter(Boolean).join('\n\n');
-    Alert.alert(regionName, lines || '상세 정보가 없어요');
-  };
+  const { regionName } = plan.result;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <View style={styles.topBar}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconBtn}>
+          <Ionicons name="chevron-back" size={26} color={colors.textStrong} />
+        </Pressable>
+        <Pressable onPress={goHome} hitSlop={12} style={styles.iconBtn}>
+          <Ionicons name="home-outline" size={24} color={colors.textStrong} />
+        </Pressable>
+      </View>
+
       <View style={styles.mainGroup}>
         <View style={styles.header}>
           <Text style={styles.title}>{displayName}님을 위한 추천 여행지</Text>
@@ -98,8 +144,9 @@ export function RecommendationScreen() {
               <View style={styles.cardOverlay} />
               <View style={styles.cardContent}>
                 <Text style={styles.cardName}>{regionName}</Text>
-                <Pressable onPress={showDetail} style={styles.detailChip}>
-                  <Text style={styles.detailText}>자세히 보기</Text>
+                <Pressable onPress={showCourses} style={styles.detailChip} disabled={busy}>
+                  <Text style={styles.detailText}>추천 코스 보기</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textStrong} />
                 </Pressable>
               </View>
             </ImageBackground>
@@ -108,10 +155,20 @@ export function RecommendationScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Pressable onPress={goHome} style={styles.homeBtn} hitSlop={12}>
-          <Text style={styles.homeText}>홈으로</Text>
+        <Pressable onPress={reroll} style={styles.rerollBtn} disabled={busy} hitSlop={8}>
+          <Ionicons name="refresh" size={18} color={colors.textStrong} />
+          <Text style={styles.rerollText}>여행지 추천 다시 받기</Text>
         </Pressable>
       </View>
+
+      {busy && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.actionPrimary} />
+          <Text style={styles.loadingText}>
+            {coursesMut.isPending ? '추천 코스를 짜고 있어요' : '다른 여행지를 찾고 있어요'}
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -120,6 +177,19 @@ const CARD_RADIUS = 28;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   mainGroup: {
     flex: 1,
     justifyContent: 'center',
@@ -180,6 +250,9 @@ const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
   detailChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: colors.cardSelected,
     borderRadius: 50,
     paddingHorizontal: spacing.lg,
@@ -199,13 +272,30 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: 'center',
   },
-  homeBtn: {
-    paddingVertical: spacing.sm,
+  rerollBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.actionSecondary,
+    borderRadius: 50,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: 16,
   },
-  homeText: {
+  rerollText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textStrong,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  loadingText: {
     fontSize: 16,
     color: colors.textSecondary,
-    textDecorationLine: 'underline',
   },
   errorWrap: {
     flex: 1,
@@ -247,5 +337,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  homeBtn: {
+    paddingVertical: spacing.sm,
+  },
+  homeText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });

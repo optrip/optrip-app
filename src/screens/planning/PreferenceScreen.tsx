@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { ChevronBackButton } from '../../components/ChevronBackButton';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { SkipLink } from '../../components/SkipLink';
 import { usePlanning } from '../../lib/planningStore';
 import { colors, radius, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList, Preference } from '../../navigation/types';
@@ -37,7 +36,7 @@ export function PreferenceScreen() {
     if (next !== cardSize) setCardSize(next);
   };
 
-  const next = () => navigation.navigate('Loading');
+  const next = () => navigation.navigate('Transport');
   const enabled = plan.preferences.length > 0;
 
   return (
@@ -48,7 +47,7 @@ export function PreferenceScreen() {
 
       <View style={styles.body}>
         <Text style={styles.title}>어떤 여행을 원하나요?</Text>
-        <Text style={styles.subtitle}>중복 선택 가능</Text>
+        <Text style={styles.subtitle}>최소 1개, 최대 3개 선택</Text>
 
         <View style={styles.grid} onLayout={onGridLayout}>
           {cardSize !== null &&
@@ -72,7 +71,6 @@ export function PreferenceScreen() {
 
         <View style={styles.bottom}>
           <PrimaryButton label="다음" onPress={next} disabled={!enabled} />
-          <SkipLink onPress={next} />
         </View>
       </View>
     </SafeAreaView>

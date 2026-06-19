@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useOnboarding } from '../lib/onboardingStore';
+import { usePlanning } from '../lib/planningStore';
 import type { OnboardingStackParamList } from '../navigation/types';
 
 const LOGO = require('../../assets/logo/optrip-small.png');
@@ -21,7 +22,13 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Home'>;
 
 export const HomeScreen = () => {
   const { profile } = useOnboarding();
+  const { reset } = usePlanning();
   const navigation = useNavigation<Nav>();
+
+  const startPlanning = () => {
+    reset(); // 새 계획 시작 시 이전 추천/제외 지역/코스 초기화
+    navigation.navigate('Budget');
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -41,10 +48,7 @@ export const HomeScreen = () => {
           >
             <Text style={styles.cardTitle}>어디로{'\n'}가 볼까요?</Text>
 
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Budget')}
-            >
+            <TouchableOpacity style={styles.actionButton} onPress={startPlanning}>
               <Text style={styles.buttonText}>계획 세우기</Text>
               <Ionicons name="chevron-forward" size={20} color="black" />
             </TouchableOpacity>

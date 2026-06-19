@@ -3,10 +3,9 @@ import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { useRecommend } from '../../api/useRecommend';
-import type { RecommendRequest } from '../../api/recommend';
-import { COMPANION_LABEL, PREFERENCE_LABEL } from '../../lib/labels';
-import { usePlanning, type DateRange } from '../../lib/planningStore';
+import { useRecommendRegion } from '../../api/useRecommend';
+import { buildRecommendRequest } from '../../lib/buildRequest';
+import { usePlanning } from '../../lib/planningStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
@@ -16,30 +15,14 @@ const LOGO = require('../../../assets/logo/optrip-large.png');
 
 const MIN_DISPLAY_MS = 2500;
 
-function durationText(noSpecific: boolean, range: DateRange) {
-  if (noSpecific || !range.start) return '';
-  if (!range.end || range.end === range.start) return '당일치기';
-  const s = new Date(range.start);
-  const e = new Date(range.end);
-  const nights = Math.round((e.getTime() - s.getTime()) / 86400000);
-  return `${nights}박 ${nights + 1}일`;
-}
-
 export function LoadingScreen() {
   const navigation = useNavigation<Nav>();
   const { plan, setResult, setError } = usePlanning();
-  const recommend = useRecommend();
+  const recommend = useRecommendRegion();
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const body: RecommendRequest = {
-      budget: plan.budget ?? '',
-      duration: durationText(plan.noSpecificDate, plan.dateRange),
-      startDate: plan.dateRange.start ?? '',
-      endDate: plan.dateRange.end ?? plan.dateRange.start ?? '',
-      companion: plan.companion ? COMPANION_LABEL[plan.companion] : '',
-      purpose: plan.preferences.map((p) => PREFERENCE_LABEL[p]),
-    };
+    const body = buildRecommendRequest(plan);
 
     const startedAt = Date.now();
 

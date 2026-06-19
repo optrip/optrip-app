@@ -4,6 +4,8 @@ export type Job = 'student' | 'employee' | 'self' | 'homemaker' | 'unemployed' |
 
 export type Companion = 'alone' | 'friend' | 'partner' | 'parents' | 'kid' | 'other';
 
+export type TransportMode = 'car' | 'public';
+
 export type Preference =
   | 'healing'
   | 'food'
@@ -28,6 +30,9 @@ export type OnboardingStackParamList = {
   Schedule: undefined;
   Companion: undefined;
   Preference: undefined;
+  Transport: undefined;
   Loading: undefined;
   Recommendation: undefined;
+  CourseList: undefined;
+  CourseDetail: { courseIndex: number };
 };
