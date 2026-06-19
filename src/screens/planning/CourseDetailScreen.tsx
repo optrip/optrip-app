@@ -243,13 +243,14 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     marginHorizontal: 20,
+    marginBottom: spacing.md,
     backgroundColor: PANEL_BG,
     borderRadius: 20,
     borderTopLeftRadius: 0,
   },
   timeline: {
     padding: 14,
-    paddingBottom: 100,
+    paddingBottom: 130, // 마지막 방문지가 패널 하단/플로팅 버튼에 붙지 않도록 여유
   },
   visitBlock: {
     flexDirection: 'row',
