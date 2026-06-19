@@ -13,7 +13,9 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Loading'>;
 
 const LOGO = require('../../../assets/logo/optrip-large.png');
 
-const MIN_DISPLAY_MS = 2500;
+// 실제 추천 응답이 약 11~15초 걸려, progress bar 가 10초에 걸쳐 차도록 설정.
+// (응답이 더 걸리면 바가 가득 찬 상태로 완료까지 대기)
+const MIN_DISPLAY_MS = 10000;
 
 export function LoadingScreen() {
   const navigation = useNavigation<Nav>();
