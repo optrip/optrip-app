@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,10 @@ import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
+
+import { WebView } from 'react-native-webview';
+import { Asset } from 'expo-asset';
+import { useRef } from 'react';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CourseDetail'>;
 type Rt = RouteProp<OnboardingStackParamList, 'CourseDetail'>;
@@ -44,6 +48,18 @@ export function CourseDetailScreen() {
   const { profile } = useOnboarding();
   const { plan } = usePlanning();
   const [selectedDay, setSelectedDay] = useState(1);
+  const webViewRef = useRef<WebView>(null);
+  const [mapUri, setMapUri] = useState<string | null>(null);
+
+  // kakaomap.html 파일 경로 불러오기
+  useEffect(() => {
+    async function loadMap() {
+      const asset = Asset.fromModule(require('../../../assets/kakaomap.html'));
+      await asset.downloadAsync();
+      setMapUri(asset.localUri);
+    }
+    loadMap();
+  }, []);
 
   const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
 
@@ -65,6 +81,18 @@ export function CourseDetailScreen() {
   }
 
   const day = course.days.find((d) => d.day === selectedDay) ?? course.days[0];
+
+  // DAY 바뀌거나 지도 로드되면 마커 데이터 전송
+  useEffect(() => {
+    if (!webViewRef.current || !day) return;
+    const visits = day.visits.map(v => ({
+      latitude: v.latitude,
+      longitude: v.longitude,
+      name: v.name,
+      order: v.order,
+    }));
+    webViewRef.current.postMessage(JSON.stringify(visits));
+  }, [day, mapUri]);
 
   const onSave = () => Alert.alert('경로 저장', '경로가 저장되었어요.');
 
@@ -90,10 +118,39 @@ export function CourseDetailScreen() {
         - 마킹 데이터: day.visits[].{ latitude, longitude, order, name } 를
           Kakao Map 위에 순서대로 마커/폴리라인으로 표시.
       */}
-      <View style={styles.mapPlaceholder}>
-        <Ionicons name="map-outline" size={26} color={colors.textSecondary} />
-        <Text style={styles.mapHint}>지도 영역 (Kakao Map 연동 예정)</Text>
-      </View>
+      {mapUri ? (
+        Platform.OS === 'web' ? (
+          <iframe
+            src={mapUri}
+            style={{ width: '100%', height: 130, border: 'none', borderRadius: 20 }}
+            title="kakaomap"
+          />
+        ) : (
+          <WebView
+            ref={webViewRef}
+            source={{ uri: mapUri }}
+            style={styles.mapPlaceholder}
+            onLoad={() => {
+              if (!day) return;
+              const visits = day.visits.map(v => ({
+                latitude: v.latitude,
+                longitude: v.longitude,
+                name: v.name,
+                order: v.order,
+              }));
+              webViewRef.current?.postMessage(JSON.stringify(visits));
+            }}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        )
+      ) : (
+        <View style={styles.mapPlaceholder}>
+          <Ionicons name="map-outline" size={26} color={colors.textSecondary} />
+          <Text style={styles.mapHint}>지도 불러오는 중...</Text>
+        </View>
+      )}
+
 
       {/* DAY 탭 (패널 위에 붙는 탭 모양) */}
       <View style={styles.tabs}>

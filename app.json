@@ -16,6 +16,9 @@
     "ios": {},
     "experiments": {
       "baseUrl": "/optrip-app"
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }
