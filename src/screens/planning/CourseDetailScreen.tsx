@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -11,8 +11,6 @@ import { usePlanning } from '../../lib/planningStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
-import { WebView } from 'react-native-webview';
-import { Asset } from 'expo-asset';
 import { useRef } from 'react';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CourseDetail'>;
@@ -48,18 +46,6 @@ export function CourseDetailScreen() {
   const { profile } = useOnboarding();
   const { plan } = usePlanning();
   const [selectedDay, setSelectedDay] = useState(1);
-  const webViewRef = useRef<WebView>(null);
-  const [mapUri, setMapUri] = useState<string | null>(null);
-
-  // kakaomap.html 파일 경로 불러오기
-  useEffect(() => {
-    async function loadMap() {
-      const asset = Asset.fromModule(require('../../../assets/kakaomap.html'));
-      await asset.downloadAsync();
-      setMapUri(asset.localUri);
-    }
-    loadMap();
-  }, []);
 
   const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
 
@@ -81,18 +67,6 @@ export function CourseDetailScreen() {
   }
 
   const day = course.days.find((d) => d.day === selectedDay) ?? course.days[0];
-
-  // DAY 바뀌거나 지도 로드되면 마커 데이터 전송
-  useEffect(() => {
-    if (!webViewRef.current || !day) return;
-    const visits = day.visits.map(v => ({
-      latitude: v.latitude,
-      longitude: v.longitude,
-      name: v.name,
-      order: v.order,
-    }));
-    webViewRef.current.postMessage(JSON.stringify(visits));
-  }, [day, mapUri]);
 
   const onSave = () => Alert.alert('경로 저장', '경로가 저장되었어요.');
 
@@ -118,38 +92,79 @@ export function CourseDetailScreen() {
         - 마킹 데이터: day.visits[].{ latitude, longitude, order, name } 를
           Kakao Map 위에 순서대로 마커/폴리라인으로 표시.
       */}
-      {mapUri ? (
-        Platform.OS === 'web' ? (
+      {(() => {
+        const visits = day.visits.map(v => ({
+          lat: v.latitude,
+          lng: v.longitude,
+          name: v.name,
+          order: v.order,
+        }));
+        const mapHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { margin: 0; padding: 0; }
+              body { width: 100%; height: 100vh; }
+              #map { width: 100%; height: 100%; }
+            </style>
+          </head>
+          <body>
+            <div id="map"></div>
+            <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=73357f5538851e9d44c950f736a17924&autoload=false"></script>
+            <script>
+              kakao.maps.load(function() {
+                var visits = ${JSON.stringify(visits)};
+                if (!visits.length) return;
+                var container = document.getElementById('map');
+                var center = new kakao.maps.LatLng(visits[0].lat, visits[0].lng);
+                var map = new kakao.maps.Map(container, { center: center, level: 7 });
+                var path = [];
+                visits.forEach(function(v) {
+                  var pos = new kakao.maps.LatLng(v.lat, v.lng);
+                  path.push(pos);
+                  var overlay = new kakao.maps.CustomOverlay({
+                    position: pos,
+                    map: map,
+                    content: '<div style="width:28px;height:28px;background:#0088FF;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + v.order + '</div>',
+                    yAnchor: 0.5,
+                    xAnchor: 0.5
+            });
+                });
+                if (path.length > 1) {
+                  var polyline = new kakao.maps.Polyline({
+                    path: path,
+                    strokeWeight: 3,
+                    strokeColor: '#0088FF',
+                    strokeOpacity: 0.8,
+                    strokeStyle: 'solid'
+                  });
+                  polyline.setMap(map);
+                }
+                var bounds = new kakao.maps.LatLngBounds();
+                path.forEach(function(p) { bounds.extend(p); });
+                map.setBounds(bounds);
+              });
+            </script>
+          </body>
+          </html>
+        `;
+        return (
           <iframe
-            src={mapUri}
-            style={{ width: '100%', height: 130, border: 'none', borderRadius: 20 }}
+            srcDoc={mapHtml}
+            style={{
+              width: '100%',
+              height: 180,
+              border: 'none',
+              borderRadius: 20,
+              marginHorizontal: 20,
+            } as any}
             title="kakaomap"
           />
-        ) : (
-          <WebView
-            ref={webViewRef}
-            source={{ uri: mapUri }}
-            style={styles.mapPlaceholder}
-            onLoad={() => {
-              if (!day) return;
-              const visits = day.visits.map(v => ({
-                latitude: v.latitude,
-                longitude: v.longitude,
-                name: v.name,
-                order: v.order,
-              }));
-              webViewRef.current?.postMessage(JSON.stringify(visits));
-            }}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-        )
-      ) : (
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="map-outline" size={26} color={colors.textSecondary} />
-          <Text style={styles.mapHint}>지도 불러오는 중...</Text>
-        </View>
-      )}
+        );
+      })()}
 
 
       {/* DAY 탭 (패널 위에 붙는 탭 모양) */}
