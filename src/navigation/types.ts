@@ -41,4 +41,6 @@ export type OnboardingStackParamList = {
   Recommendation: undefined;
   CourseList: undefined;
   CourseDetail: { courseIndex: number };
+  MyPage: undefined;
+  EditProfile: { userInfo: { name: string; gender: string; birthYear: string } };
 };

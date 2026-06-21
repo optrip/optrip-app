@@ -67,10 +67,10 @@ export const HomeScreen = () => {
           <Ionicons name="location" size={40} color="#3B82F6" />
         </View>
 
-        {/* 마이페이지는 일단 생략 */}
-        <View>
+        {/* 사람 버튼: 터치하면 우리가 만든 마이페이지 화면으로 이동 */}
+        <TouchableOpacity onPress={() => navigation.navigate('MyPage')}>
           <Ionicons name="person-outline" size={28} color="#ccc" />
-        </View>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

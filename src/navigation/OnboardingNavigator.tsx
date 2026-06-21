@@ -18,6 +18,9 @@ import { LoadingScreen } from '../screens/planning/LoadingScreen';
 import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
+import MyPageScreen from '../screens/MyPageScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+
 
 import type { OnboardingStackParamList } from './types';
 
@@ -106,6 +109,16 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         name="CourseDetail"
         component={CourseDetailScreen}
         options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="MyPage"
+        component={MyPageScreen}
+        options={{ headerShown: false, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ headerShown: false, animation: 'slide_from_right' }}
       />
     </Stack.Navigator>
   );
