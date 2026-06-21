@@ -71,8 +71,8 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
           if (p.preferences.includes(pref)) {
             return { ...p, preferences: p.preferences.filter((x) => x !== pref) };
           }
-          // 최대 3개까지만 선택 가능
-          if (p.preferences.length >= 3) return p;
+          // 최대 5개까지만 선택 가능 (선택 순서는 동점 시 카테고리 우선순위 기준이 됨)
+          if (p.preferences.length >= 5) return p;
           return { ...p, preferences: [...p.preferences, pref] };
         }),
       setTransport: (transport) => setPlan((p) => ({ ...p, transport })),

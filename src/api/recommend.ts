@@ -7,7 +7,7 @@ export type RecommendRequest = {
   startDate: string;
   endDate: string;
   companion: string;
-  purpose: string[]; // 최소 1개, 최대 3개
+  purpose: string[]; // 추구미 라벨, 최소 1개, 최대 5개 (카테고리 묶음은 서버에서 처리)
   transport: string; // "자동차" | "대중교통"
   excludeRegions?: string[]; // 지역 다시 받기 시 제외할 지역명
   regionName?: string; // 코스 생성 시 선택한 지역명
@@ -43,7 +43,7 @@ export type DayPlan = {
 };
 
 export type Course = {
-  purpose: string;
+  purpose: string; // 카테고리 라벨 (예: "자연·휴식"). 서버가 추구미를 묶어 결정
   title: string;
   summary: string;
   days: DayPlan[];

@@ -53,7 +53,7 @@ export function CourseListScreen() {
               imageStyle={styles.cardBgImage}
             >
               <View style={styles.cardTop}>
-                <Text style={styles.cardPurpose}>{course.purpose}</Text>
+                <Text style={styles.cardPurpose}>{course.purpose} 코스</Text>
                 <Text style={styles.cardSummary} numberOfLines={2}>
                   {course.summary}
                 </Text>
