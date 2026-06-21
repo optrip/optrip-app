@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,7 +11,6 @@ import { usePlanning } from '../../lib/planningStore';
 import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
-import { useRef } from 'react';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CourseDetail'>;
 type Rt = RouteProp<OnboardingStackParamList, 'CourseDetail'>;
@@ -105,6 +104,7 @@ export function CourseDetailScreen() {
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
             <style>
               * { margin: 0; padding: 0; }
               body { width: 100%; height: 100vh; }
@@ -113,7 +113,7 @@ export function CourseDetailScreen() {
           </head>
           <body>
             <div id="map"></div>
-            <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=73357f5538851e9d44c950f736a17924&autoload=false"></script>
+            <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=73357f5538851e9d44c950f736a17924&autoload=false&libraries=services"></script>
             <script>
               kakao.maps.load(function() {
                 var visits = ${JSON.stringify(visits)};
