@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
   menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
   menuText: { fontSize: 16, color: '#000', fontWeight: '500' },
   
-  // 하단 바 스타일 이식
   bottomBar: {
     height: 80,
     flexDirection: 'row',

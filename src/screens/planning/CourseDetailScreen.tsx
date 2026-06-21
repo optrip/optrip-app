@@ -3,10 +3,7 @@ import { View, Text, StyleSheet, Pressable, Alert, SafeAreaView, ScrollView } fr
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlanning } from '../../lib/planningStore';
-import { useOnboarding } from '../../lib/onboardingStore'; // 경로가 틀리면 빨간 줄이 뜹니다.
-
-// 경로가 맞는지 꼭 확인하세요! 
-// 만약 'lib' 폴더가 안 보이면 ../를 하나씩 추가/삭제해서 경로를 맞춰주세요.
+import { useOnboarding } from '../../lib/onboardingStore';
 
 export function CourseDetailScreen() {
   const navigation = useNavigation();
@@ -49,7 +46,6 @@ export function CourseDetailScreen() {
         <Text style={styles.title}>{regionName} {course.purpose} 코스</Text>
         <Text style={styles.subtitle}>{course.days.length}일 일정</Text>
         
-        {/* 여기에 상세 코스 내용이 들어갑니다 (기존 코드 유지) */}
         <View style={styles.body}>
           <Text>{course.summary}</Text>
         </View>

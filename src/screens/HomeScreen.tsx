@@ -26,7 +26,7 @@ export const HomeScreen = () => {
   const navigation = useNavigation<Nav>();
 
   const startPlanning = () => {
-    reset(); // 새 계획 시작 시 이전 추천/제외 지역/코스 초기화
+    reset();
     navigation.navigate('Budget');
   };
   return (

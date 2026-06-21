@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ImageBackground, SafeAreaView, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useOnboarding } from '../lib/onboardingStore'; // 경로 확인!
+import { useOnboarding } from '../lib/onboardingStore';
 
 const LOGO = require('../../assets/logo/optrip-small.png');
 
@@ -38,7 +38,6 @@ export const MyTripsScreen = () => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* 다시 추가된 하단 메뉴 바 */}
       <View style={styles.bottomBar}>
         <View>
           <Ionicons name="briefcase" size={28} color="#3B82F6" />
@@ -65,7 +64,6 @@ const styles = StyleSheet.create({
   tripTitle: { fontSize: 20, fontWeight: 'bold', color: '#000' },
   tripDesc: { fontSize: 14, color: '#000', marginTop: 5, fontWeight: '600' },
   
-  // 하단 바 스타일
   bottomBar: {
     height: 80,
     flexDirection: 'row',

@@ -1,31 +1,23 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 import type { Gender, Job } from '../navigation/types';
-import { loadJSON, removeKey, saveJSON } from './storage';
 
 export type SavedTrip = { id: string; title: string; desc: string; image: string };
 export type OnboardingProfile = { name: string; gender: Gender | null; birthYear: string; job: Job | null; };
 
-type PersistedOnboarding = {
-  profile: OnboardingProfile;
-  onboarded: boolean;
-  savedTrips: SavedTrip[];
-};
-
 type OnboardingContextValue = {
   profile: OnboardingProfile;
   onboarded: boolean;
-  hydrated: boolean;
   savedTrips: SavedTrip[];
   setName: (v: string) => void;
   setGender: (v: Gender) => void;
   setBirthYear: (v: string) => void;
   setJob: (v: Job) => void;
   completeOnboarding: () => void;
-  resetOnboarding: () => void;
   saveTrip: (trip: Omit<SavedTrip, 'id'>) => void;
+  // 초기화 함수는 이제 필요 없지만, 혹시 나중에 쓰실까봐 남겨둡니다.
+  resetOnboarding: () => void; 
 };
 
-const STORAGE_KEY = 'optrip.onboarding';
 const initial: OnboardingProfile = { name: '', gender: null, birthYear: '', job: null };
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
@@ -33,26 +25,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<OnboardingProfile>(initial);
   const [onboarded, setOnboarded] = useState(false);
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
-  const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    loadJSON<PersistedOnboarding>(STORAGE_KEY).then((stored) => {
-      if (stored) {
-        setProfile({ ...initial, ...stored.profile });
-        setOnboarded(!!stored.onboarded);
-        setSavedTrips(stored.savedTrips || []);
-      }
-      setHydrated(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    saveJSON<PersistedOnboarding>(STORAGE_KEY, { profile, onboarded, savedTrips });
-  }, [profile, onboarded, savedTrips, hydrated]);
+  // 이제 useEffect로 저장하거나 불러오는 작업이 없습니다!
+  // 즉, 앱을 켤 때마다 항상 초기 상태인 'false'와 빈 데이터로 시작합니다.
 
   const value = useMemo<OnboardingContextValue>(() => ({
-    profile, onboarded, hydrated, savedTrips,
+    profile, onboarded, savedTrips,
     setName: (name) => setProfile((p) => ({ ...p, name })),
     setGender: (gender) => setProfile((p) => ({ ...p, gender })),
     setBirthYear: (birthYear) => setProfile((p) => ({ ...p, birthYear })),
@@ -63,9 +41,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setProfile(initial);
       setOnboarded(false);
       setSavedTrips([]);
-      removeKey(STORAGE_KEY);
     },
-  }), [profile, onboarded, hydrated, savedTrips]);
+  }), [profile, onboarded, savedTrips]);
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
 }
