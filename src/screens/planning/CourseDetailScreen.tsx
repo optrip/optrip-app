@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useRef, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -45,6 +45,8 @@ export function CourseDetailScreen() {
   const { profile, saveTrip } = useOnboarding();
   const { plan } = usePlanning();
   const [selectedDay, setSelectedDay] = useState(1);
+  const [saved, setSaved] = useState(!!params.savedCourse); // 히스토리 진입 시 이미 저장된 상태
+  const scale = useRef(new Animated.Value(1)).current;
 
   const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
 
@@ -68,8 +70,19 @@ export function CourseDetailScreen() {
 
   const day = course.days.find((d) => d.day === selectedDay) ?? course.days[0];
 
+  // 버튼 눌렀을 때 통통 튀는 인터랙션 (눌림 → 살짝 커졌다 복귀)
+  const bounce = () => {
+    Animated.sequence([
+      Animated.spring(scale, { toValue: 0.82, useNativeDriver: true, speed: 50, bounciness: 0 }),
+      Animated.spring(scale, { toValue: 1.12, useNativeDriver: true, speed: 20, bounciness: 14 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 10 }),
+    ]).start();
+  };
+
   // [경로 저장] 내 여행 화면에 코스 저장 (hanyoung 추가 기능 유지)
   const onSave = () => {
+    bounce();
+    if (saved) return; // 중복 저장 방지 (인터랙션은 그대로 실행)
     saveTrip({
       title: `${regionName} ${course.purpose} 코스`,
       desc: `${course.days.length}일 코스`,
@@ -77,6 +90,7 @@ export function CourseDetailScreen() {
       course,        // 히스토리에서 다시 열 수 있도록 코스 데이터 저장
       regionName,
     });
+    setSaved(true);
     Alert.alert('저장 완료', '내 여행 화면에 코스가 저장되었습니다!');
   };
 
@@ -233,10 +247,26 @@ export function CourseDetailScreen() {
       </View>
 
       {/* 경로 저장 */}
-      <Pressable style={styles.saveBtn} onPress={onSave}>
-        <Ionicons name="bookmark-outline" size={26} color="#111111" />
-        <Text style={styles.saveText}>경로 저장</Text>
-      </Pressable>
+      <Animated.View style={[styles.saveBtnWrap, { transform: [{ scale }] }]}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.saveBtn,
+            saved && styles.saveBtnSaved,
+            pressed && styles.saveBtnPressed,
+          ]}
+          onPress={onSave}
+          onPressIn={() => Animated.spring(scale, { toValue: 0.9, useNativeDriver: true, speed: 50, bounciness: 0 }).start()}
+        >
+          <Ionicons
+            name={saved ? 'bookmark' : 'bookmark-outline'}
+            size={26}
+            color={saved ? '#FFFFFF' : '#111111'}
+          />
+          <Text style={[styles.saveText, saved && styles.saveTextSaved]}>
+            {saved ? '저장됨' : '경로 저장'}
+          </Text>
+        </Pressable>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -413,10 +443,18 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'center',
   },
-  saveBtn: {
+  saveBtnWrap: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
+    borderRadius: 35,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 1.6, height: 3.3 },
+    elevation: 6,
+  },
+  saveBtn: {
     width: 70,
     height: 70,
     borderRadius: 35,
@@ -426,15 +464,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    shadowOffset: { width: 1.6, height: 3.3 },
-    elevation: 6,
+  },
+  saveBtnPressed: {
+    backgroundColor: '#F0F0F0',
+  },
+  saveBtnSaved: {
+    backgroundColor: BLUE,
+    borderColor: BLUE,
   },
   saveText: {
     fontSize: 10,
     fontWeight: '300',
     color: '#111111',
+  },
+  saveTextSaved: {
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
 });
