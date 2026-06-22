@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 import type { Gender, Job } from '../navigation/types';
+import type { Course } from '../api/recommend';
 
-export type SavedTrip = { id: string; title: string; desc: string; image: string };
+// course/regionName 은 히스토리에서 카드를 눌러 코스 상세를 다시 그릴 때 사용
+export type SavedTrip = { id: string; title: string; desc: string; image: string; course: Course; regionName: string };
 export type OnboardingProfile = { name: string; gender: Gender | null; birthYear: string; job: Job | null; };
 
 type OnboardingContextValue = {

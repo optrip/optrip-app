@@ -23,16 +23,27 @@ export const MyTripsScreen = () => {
           <Text style={{ textAlign: 'center', marginTop: 50, color: '#999' }}>아직 저장한 여행이 없어요.</Text>
         ) : (
           savedTrips.map((trip) => (
-            <View key={trip.id} style={styles.card}>
-              <ImageBackground 
-                source={{ uri: trip.image }} 
-                style={styles.cardBackground} 
+            <TouchableOpacity
+              key={trip.id}
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() =>
+                navigation.navigate('CourseDetail', {
+                  courseIndex: 0,
+                  savedCourse: trip.course,
+                  savedRegionName: trip.regionName,
+                })
+              }
+            >
+              <ImageBackground
+                source={{ uri: trip.image }}
+                style={styles.cardBackground}
                 imageStyle={{ borderRadius: 25, opacity: 0.8 }}
               >
                 <Text style={styles.tripTitle}>{trip.title}</Text>
                 <Text style={styles.tripDesc}>{trip.desc}</Text>
               </ImageBackground>
-            </View>
+            </TouchableOpacity>
           ))
         )}
         <View style={{ height: 100 }} />

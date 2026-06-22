@@ -48,8 +48,9 @@ export function CourseDetailScreen() {
 
   const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
 
-  const course = plan.courses?.courses[params.courseIndex];
-  const regionName = plan.courses?.regionName ?? plan.result?.regionName ?? '';
+  // 히스토리에서 진입한 경우 저장된 코스(savedCourse)를 우선 사용, 아니면 현재 플랜에서
+  const course = params.savedCourse ?? plan.courses?.courses[params.courseIndex];
+  const regionName = params.savedRegionName ?? plan.courses?.regionName ?? plan.result?.regionName ?? '';
   const displayName = profile.name || 'ㅇㅇ';
 
   if (!course) {
@@ -73,6 +74,8 @@ export function CourseDetailScreen() {
       title: `${regionName} ${course.purpose} 코스`,
       desc: `${course.days.length}일 코스`,
       image: 'https://picsum.photos/800/600',
+      course,        // 히스토리에서 다시 열 수 있도록 코스 데이터 저장
+      regionName,
     });
     Alert.alert('저장 완료', '내 여행 화면에 코스가 저장되었습니다!');
   };

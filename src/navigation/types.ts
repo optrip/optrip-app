@@ -1,3 +1,5 @@
+import type { Course } from '../api/recommend';
+
 export type Gender = 'female' | 'male';
 
 export type Job = 'student' | 'employee' | 'self' | 'homemaker' | 'unemployed' | 'other';
@@ -40,7 +42,7 @@ export type OnboardingStackParamList = {
   Loading: undefined;
   Recommendation: undefined;
   CourseList: undefined;
-  CourseDetail: { courseIndex: number };
+  CourseDetail: { courseIndex: number; savedCourse?: Course; savedRegionName?: string };
   MyPage: undefined;
   EditProfile: { userInfo: { name: string; gender: string; birthYear: string } };
 };
