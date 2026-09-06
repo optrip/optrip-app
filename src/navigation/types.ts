@@ -1,4 +1,5 @@
 import type { Course } from '../api/recommend';
+import type { RegionCandidate } from '../api/regions';
 
 export type Gender = 'female' | 'male';
 
@@ -41,6 +42,11 @@ export type OnboardingStackParamList = {
   Transport: undefined;
   Loading: undefined;
   Recommendation: undefined;
+  InterpretationReview: undefined;
+  PreferenceCorrection: undefined;
+  RegionCandidatesPlaceholder: undefined;
+  RegionCandidates: undefined;
+  RegionDetail: { region: RegionCandidate };
   CourseList: undefined;
   CourseDetail: { courseIndex: number; savedCourse?: Course; savedRegionName?: string };
   MyPage: undefined;

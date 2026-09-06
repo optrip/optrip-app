@@ -27,7 +27,7 @@ export const HomeScreen = () => {
 
   const startPlanning = () => {
     reset();
-    navigation.navigate('Budget');
+    navigation.navigate('InterpretationReview');
   };
   return (
     <SafeAreaView style={styles.safeArea}>

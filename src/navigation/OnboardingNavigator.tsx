@@ -16,6 +16,11 @@ import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
 import { TransportScreen } from '../screens/planning/TransportScreen';
 import { LoadingScreen } from '../screens/planning/LoadingScreen';
 import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
+import { InterpretationReviewScreen } from '../screens/planning/InterpretationReviewScreen';
+import { PreferenceCorrectionScreen } from '../screens/planning/PreferenceCorrectionScreen';
+import { RegionCandidatesPlaceholderScreen } from '../screens/planning/RegionCandidatesPlaceholderScreen';
+import { RegionCandidatesScreen } from '../screens/planning/RegionCandidatesScreen';
+import { RegionDetailScreen } from '../screens/planning/RegionDetailScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
 import MyPageScreen from '../screens/MyPageScreen';
@@ -99,6 +104,31 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         name="Recommendation"
         component={RecommendationScreen}
         options={{ animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="InterpretationReview"
+        component={InterpretationReviewScreen}
+        options={{ animation: 'fade' }}
+      />
+      <Stack.Screen
+        name="PreferenceCorrection"
+        component={PreferenceCorrectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionCandidatesPlaceholder"
+        component={RegionCandidatesPlaceholderScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionCandidates"
+        component={RegionCandidatesScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionDetail"
+        component={RegionDetailScreen}
+        options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="CourseList"

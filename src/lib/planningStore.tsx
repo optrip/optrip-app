@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import type { CourseListResponse, RegionResponse } from '../api/recommend';
+import type { RegionCandidate } from '../api/regions';
 import type { Companion, Preference, TransportMode } from '../navigation/types';
 
 export type DateRange = {
@@ -16,6 +17,7 @@ export type PlanningState = {
   preferences: Preference[];
   transport: TransportMode | null;
   result: RegionResponse | null; // 현재 추천된 지역 (Image #1)
+  selectedRegion: RegionCandidate | null;
   courses: CourseListResponse | null; // 선택 지역의 코스들 (Image #2, #3)
   excludeRegions: string[]; // 다시 받기 시 제외할, 이미 본 지역명
   error: string | null;
@@ -30,6 +32,7 @@ type PlanningContextValue = {
   togglePreference: (p: Preference) => void;
   setTransport: (t: TransportMode) => void;
   setResult: (r: RegionResponse | null) => void;
+  setSelectedRegion: (region: RegionCandidate | null) => void;
   setCourses: (c: CourseListResponse | null) => void;
   pushExcludedRegion: (name: string) => void;
   setError: (e: string | null) => void;
@@ -44,6 +47,7 @@ const initial: PlanningState = {
   preferences: [],
   transport: null,
   result: null,
+  selectedRegion: null,
   courses: null,
   excludeRegions: [],
   error: null,
@@ -78,6 +82,7 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
       setTransport: (transport) => setPlan((p) => ({ ...p, transport })),
       // 새 지역을 받으면 이전에 보던 코스는 무효화
       setResult: (result) => setPlan((p) => ({ ...p, result, courses: null, error: null })),
+      setSelectedRegion: (selectedRegion) => setPlan((p) => ({ ...p, selectedRegion })),
       setCourses: (courses) => setPlan((p) => ({ ...p, courses })),
       pushExcludedRegion: (name) =>
         setPlan((p) =>
