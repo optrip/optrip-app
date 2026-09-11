@@ -21,11 +21,14 @@ import { PreferenceCorrectionScreen } from '../screens/planning/PreferenceCorrec
 import { RegionCandidatesPlaceholderScreen } from '../screens/planning/RegionCandidatesPlaceholderScreen';
 import { RegionCandidatesScreen } from '../screens/planning/RegionCandidatesScreen';
 import { RegionDetailScreen } from '../screens/planning/RegionDetailScreen';
+import { CorePlacesScreen } from '../screens/planning/CorePlacesScreen';
+import { PlaceDetailScreen } from '../screens/planning/PlaceDetailScreen';
+import { PlaceSelectionScreen } from '../screens/planning/PlaceSelectionScreen';
+import { CoursePreviewScreen } from '../screens/planning/CoursePreviewScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
 import MyPageScreen from '../screens/MyPageScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-
 
 import type { OnboardingStackParamList } from './types';
 
@@ -128,6 +131,26 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
       <Stack.Screen
         name="RegionDetail"
         component={RegionDetailScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="CorePlaces"
+        component={CorePlacesScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="PlaceDetail"
+        component={PlaceDetailScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="PlaceSelection"
+        component={PlaceSelectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="CoursePreview"
+        component={CoursePreviewScreen}
         options={{ animation: 'slide_from_right' }}
       />
       <Stack.Screen

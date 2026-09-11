@@ -47,6 +47,10 @@ export type OnboardingStackParamList = {
   RegionCandidatesPlaceholder: undefined;
   RegionCandidates: undefined;
   RegionDetail: { region: RegionCandidate };
+  CorePlaces: undefined;
+  PlaceDetail: { contentId: string };
+  PlaceSelection: undefined;
+  CoursePreview: undefined;
   CourseList: undefined;
   CourseDetail: { courseIndex: number; savedCourse?: Course; savedRegionName?: string };
   MyPage: undefined;

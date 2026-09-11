@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import type { CourseListResponse, RegionResponse } from '../api/recommend';
+import type { PlaceRecommendationsResponse } from '../api/places';
 import type { RegionCandidate } from '../api/regions';
 import type { Companion, Preference, TransportMode } from '../navigation/types';
 
@@ -18,6 +19,8 @@ export type PlanningState = {
   transport: TransportMode | null;
   result: RegionResponse | null; // 현재 추천된 지역 (Image #1)
   selectedRegion: RegionCandidate | null;
+  placeRecommendations: PlaceRecommendationsResponse | null;
+  selectedPlaceIds: string[];
   courses: CourseListResponse | null; // 선택 지역의 코스들 (Image #2, #3)
   excludeRegions: string[]; // 다시 받기 시 제외할, 이미 본 지역명
   error: string | null;
@@ -33,6 +36,8 @@ type PlanningContextValue = {
   setTransport: (t: TransportMode) => void;
   setResult: (r: RegionResponse | null) => void;
   setSelectedRegion: (region: RegionCandidate | null) => void;
+  setPlaceRecommendations: (places: PlaceRecommendationsResponse | null) => void;
+  setSelectedPlaceIds: (contentIds: string[]) => void;
   setCourses: (c: CourseListResponse | null) => void;
   pushExcludedRegion: (name: string) => void;
   setError: (e: string | null) => void;
@@ -48,6 +53,8 @@ const initial: PlanningState = {
   transport: null,
   result: null,
   selectedRegion: null,
+  placeRecommendations: null,
+  selectedPlaceIds: [],
   courses: null,
   excludeRegions: [],
   error: null,
@@ -82,7 +89,20 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
       setTransport: (transport) => setPlan((p) => ({ ...p, transport })),
       // 새 지역을 받으면 이전에 보던 코스는 무효화
       setResult: (result) => setPlan((p) => ({ ...p, result, courses: null, error: null })),
-      setSelectedRegion: (selectedRegion) => setPlan((p) => ({ ...p, selectedRegion })),
+      setSelectedRegion: (selectedRegion) =>
+        setPlan((p) => ({
+          ...p,
+          selectedRegion,
+          placeRecommendations: null,
+          selectedPlaceIds: [],
+        })),
+      setPlaceRecommendations: (placeRecommendations) =>
+        setPlan((p) => ({
+          ...p,
+          placeRecommendations,
+          selectedPlaceIds: placeRecommendations?.core.map((place) => place.contentId) ?? [],
+        })),
+      setSelectedPlaceIds: (selectedPlaceIds) => setPlan((p) => ({ ...p, selectedPlaceIds })),
       setCourses: (courses) => setPlan((p) => ({ ...p, courses })),
       pushExcludedRegion: (name) =>
         setPlan((p) =>

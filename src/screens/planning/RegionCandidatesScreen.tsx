@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getMockRegionRecommendations, type RegionCandidate } from '../../api/regions';
+import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
@@ -13,8 +14,10 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'RegionCandidates
 
 export function RegionCandidatesScreen() {
   const navigation = useNavigation<Nav>();
+  const { profile } = useOnboarding();
   const { plan } = usePlanning();
   const [regions, setRegions] = useState<RegionCandidate[]>([]);
+  const displayName = profile.name || 'ㅇㅇ';
 
   useEffect(() => {
     getMockRegionRecommendations().then((response) => setRegions(response.regions));
@@ -29,13 +32,17 @@ export function RegionCandidatesScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconButton}>
           <Ionicons name="chevron-back" size={30} color="#222222" />
         </Pressable>
-        <Pressable onPress={() => navigation.navigate('Home')} hitSlop={12} style={styles.iconButton}>
+        <Pressable
+          onPress={() => navigation.navigate('Home')}
+          hitSlop={12}
+          style={styles.iconButton}
+        >
           <Ionicons name="home-outline" size={29} color="#222222" />
         </Pressable>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>길동님을 위한 추천 여행지</Text>
+        <Text style={styles.title}>{displayName}님을 위한 추천 여행지</Text>
 
         <View style={styles.list}>
           {regions.map((region) => {
@@ -97,6 +104,7 @@ const styles = StyleSheet.create({
     lineHeight: 31,
     fontWeight: '500',
     color: '#111111',
+    textAlign: 'center',
     marginBottom: 25,
   },
   list: { gap: 20 },
