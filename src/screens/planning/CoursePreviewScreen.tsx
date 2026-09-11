@@ -21,6 +21,60 @@ import type { OnboardingStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CoursePreview'>;
 const EMPTY_PLACES: PlaceSummary[] = [];
 
+function getVehicleLabel(vehicleType: string) {
+  switch (vehicleType) {
+    case 'BUS':
+    case 'INTERCITY_BUS':
+    case 'TROLLEYBUS':
+      return '버스';
+    case 'SUBWAY':
+      return '지하철';
+    case 'HEAVY_RAIL':
+    case 'COMMUTER_TRAIN':
+    case 'HIGH_SPEED_TRAIN':
+    case 'LONG_DISTANCE_TRAIN':
+    case 'RAIL':
+      return '기차';
+    case 'LIGHT_RAIL':
+    case 'TRAM':
+      return '경전철';
+    case 'FERRY':
+      return '배';
+    default:
+      return '대중교통';
+  }
+}
+
+function getRouteIcon(leg: RouteLeg | undefined, selectedTransport: 'public' | 'car') {
+  if (selectedTransport === 'car') return 'car-outline' as const;
+  const vehicleType = leg?.transitSteps[0]?.vehicleType;
+  if (vehicleType === 'SUBWAY') return 'subway-outline' as const;
+  if (vehicleType?.includes('RAIL') || vehicleType?.includes('TRAIN')) {
+    return 'train-outline' as const;
+  }
+  return 'bus-outline' as const;
+}
+
+function getRouteSummary(leg: RouteLeg, selectedTransport: 'public' | 'car') {
+  const minutes = Math.max(1, Math.round(leg.durationSeconds / 60));
+  const distance = (leg.distanceMeters / 1000).toFixed(1);
+
+  if (selectedTransport === 'car') return `자동차 · 약 ${minutes}분 · ${distance}km`;
+
+  const vehicleLabels = [
+    ...new Set(leg.transitSteps.map((step) => getVehicleLabel(step.vehicleType))),
+  ];
+  const lineNames = [
+    ...new Set(leg.transitSteps.map((step) => step.lineName).filter((name) => name.length > 0)),
+  ];
+  const transferCount = Math.max(0, leg.transitSteps.length - 1);
+  const transportText = vehicleLabels.length > 0 ? `${vehicleLabels.join('·')} 이용` : '대중교통';
+  const lineText = lineNames.length > 0 ? ` · ${lineNames.join(', ')}` : '';
+  const transferText = transferCount > 0 ? ` · ${transferCount}회 환승` : ' · 환승 없음';
+
+  return `${transportText}${lineText}${transferText} · 약 ${minutes}분`;
+}
+
 export function CoursePreviewScreen() {
   const navigation = useNavigation<Nav>();
   const { profile } = useOnboarding();
@@ -215,7 +269,7 @@ export function CoursePreviewScreen() {
               {index < visiblePlaces.length - 1 ? (
                 <View style={styles.routeBubble}>
                   <Ionicons
-                    name={selectedTransport === 'public' ? 'bus-outline' : 'car-outline'}
+                    name={getRouteIcon(routeLegs[index], selectedTransport)}
                     size={20}
                     color="#222222"
                   />
@@ -223,9 +277,7 @@ export function CoursePreviewScreen() {
                     {routeLoading && !routeLegs[index]
                       ? '경로 계산 중...'
                       : routeLegs[index]
-                        ? `약 ${Math.max(1, Math.round(routeLegs[index].durationSeconds / 60))}분 · ${(
-                            routeLegs[index].distanceMeters / 1000
-                          ).toFixed(1)}km`
+                        ? getRouteSummary(routeLegs[index], selectedTransport)
                         : '경로 정보 없음'}
                   </Text>
                 </View>
