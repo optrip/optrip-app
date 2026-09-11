@@ -57,22 +57,29 @@ function getRouteIcon(leg: RouteLeg | undefined, selectedTransport: 'public' | '
 
 function getRouteSummary(leg: RouteLeg, selectedTransport: 'public' | 'car') {
   const minutes = Math.max(1, Math.round(leg.durationSeconds / 60));
-  const distance = (leg.distanceMeters / 1000).toFixed(1);
 
-  if (selectedTransport === 'car') return `자동차 · 약 ${minutes}분 · ${distance}km`;
+  if (selectedTransport === 'car') return `자동차 · 약 ${minutes}분 소요`;
 
   const vehicleLabels = [
     ...new Set(leg.transitSteps.map((step) => getVehicleLabel(step.vehicleType))),
   ];
-  const lineNames = [
-    ...new Set(leg.transitSteps.map((step) => step.lineName).filter((name) => name.length > 0)),
+  const busNumbers = [
+    ...new Set(
+      leg.transitSteps
+        .filter((step) => getVehicleLabel(step.vehicleType) === '버스')
+        .map((step) => step.lineName.match(/^\s*(\d+(?:-\d+)?[A-Za-z]?)/)?.[1])
+        .filter((name): name is string => Boolean(name)),
+    ),
   ];
   const transferCount = Math.max(0, leg.transitSteps.length - 1);
-  const transportText = vehicleLabels.length > 0 ? `${vehicleLabels.join('·')} 이용` : '대중교통';
-  const lineText = lineNames.length > 0 ? ` · ${lineNames.join(', ')}` : '';
-  const transferText = transferCount > 0 ? ` · ${transferCount}회 환승` : ' · 환승 없음';
+  const displayLabels = vehicleLabels.map((label) => {
+    if (label !== '버스' || busNumbers.length === 0) return label;
+    return `${busNumbers.map((number) => `${number}번`).join('·')} 버스`;
+  });
+  const transportText = displayLabels.length > 0 ? `${displayLabels.join('·')} 이용` : '대중교통';
+  const transferText = transferCount > 0 ? ` · ${transferCount}회 환승` : '';
 
-  return `${transportText}${lineText}${transferText} · 약 ${minutes}분`;
+  return `${transportText}${transferText} · 약 ${minutes}분 소요`;
 }
 
 export function CoursePreviewScreen() {
