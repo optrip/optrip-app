@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import type { RoutePoint } from '../../api/routes';
+
 export type CourseMapPlace = {
   contentId: string;
   title: string;
@@ -9,6 +11,7 @@ export type CourseMapPlace = {
 
 type Props = {
   places: CourseMapPlace[];
+  routePaths?: RoutePoint[][];
 };
 
 export function GoogleCourseMap({ places }: Props) {

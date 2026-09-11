@@ -7,6 +7,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { GoogleCourseMap } from '../../components/planning/GoogleCourseMap';
 import { getPlaceDisplayTitle, type PlaceSummary } from '../../api/places';
+import {
+  decodeGooglePolyline,
+  getRouteLeg,
+  type RouteLeg,
+  type RouteTravelMode,
+} from '../../api/routes';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
 import { buildCourseSchedule } from '../../lib/buildCourseSchedule';
@@ -22,6 +28,9 @@ export function CoursePreviewScreen() {
   const regionName = plan.selectedRegion?.name ?? '여행지';
   const displayName = profile.name || '여행자';
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [routeLegs, setRouteLegs] = useState<RouteLeg[]>([]);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
   const selectedTransport = plan.transport ?? 'public';
 
   const selectedPlaces = useMemo(() => {
@@ -58,6 +67,52 @@ export function CoursePreviewScreen() {
         longitude: place.mapx,
       })),
     [regionName, visiblePlaces],
+  );
+
+  useEffect(() => {
+    if (visiblePlaces.length < 2) {
+      setRouteLegs([]);
+      setRouteError(null);
+      return;
+    }
+
+    let active = true;
+    const travelMode: RouteTravelMode = selectedTransport === 'public' ? 'TRANSIT' : 'DRIVE';
+    setRouteLoading(true);
+    setRouteError(null);
+
+    Promise.all(
+      visiblePlaces.slice(0, -1).map((place, index) => {
+        const nextPlace = visiblePlaces[index + 1];
+        return getRouteLeg({
+          originLatitude: place.mapy,
+          originLongitude: place.mapx,
+          destinationLatitude: nextPlace.mapy,
+          destinationLongitude: nextPlace.mapx,
+          travelMode,
+        });
+      }),
+    )
+      .then((legs) => {
+        if (active) setRouteLegs(legs);
+      })
+      .catch((reason: unknown) => {
+        if (!active) return;
+        setRouteLegs([]);
+        setRouteError(reason instanceof Error ? reason.message : '경로를 불러오지 못했어요.');
+      })
+      .finally(() => {
+        if (active) setRouteLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedTransport, visiblePlaces]);
+
+  const routePaths = useMemo(
+    () => routeLegs.map((leg) => decodeGooglePolyline(leg.encodedPolyline)),
+    [routeLegs],
   );
 
   return (
@@ -114,7 +169,7 @@ export function CoursePreviewScreen() {
           </View>
         </View>
 
-        <GoogleCourseMap places={mapPlaces} />
+        <GoogleCourseMap places={mapPlaces} routePaths={routePaths} />
 
         <ScrollView
           horizontal
@@ -138,22 +193,43 @@ export function CoursePreviewScreen() {
         </ScrollView>
 
         <View style={styles.courseCard}>
+          {routeError ? <Text style={styles.routeError}>{routeError}</Text> : null}
           {visiblePlaces.length === 0 ? (
             <Text style={styles.emptyText}>이 날짜에 배치할 장소가 아직 없어요.</Text>
           ) : null}
           {visiblePlaces.map((place, index) => (
-            <View key={place.contentId} style={styles.placeRow}>
-              <View style={styles.timelineColumn}>
-                <View style={styles.numberCircle}>
-                  <Text style={styles.numberText}>{index + 1}</Text>
+            <View key={place.contentId} style={styles.itineraryBlock}>
+              <View style={styles.placeRow}>
+                <View style={styles.timelineColumn}>
+                  <View style={styles.numberCircle}>
+                    <Text style={styles.numberText}>{index + 1}</Text>
+                  </View>
+                </View>
+                <View style={styles.placeTextArea}>
+                  <Text style={styles.placeTitle}>
+                    {getPlaceDisplayTitle(place.title, regionName)}
+                  </Text>
+                  <Text style={styles.placeReason}>{place.reason}</Text>
                 </View>
               </View>
-              <View style={styles.placeTextArea}>
-                <Text style={styles.placeTitle}>
-                  {getPlaceDisplayTitle(place.title, regionName)}
-                </Text>
-                <Text style={styles.placeReason}>{place.reason}</Text>
-              </View>
+              {index < visiblePlaces.length - 1 ? (
+                <View style={styles.routeBubble}>
+                  <Ionicons
+                    name={selectedTransport === 'public' ? 'bus-outline' : 'car-outline'}
+                    size={20}
+                    color="#222222"
+                  />
+                  <Text style={styles.routeText}>
+                    {routeLoading && !routeLegs[index]
+                      ? '경로 계산 중...'
+                      : routeLegs[index]
+                        ? `약 ${Math.max(1, Math.round(routeLegs[index].durationSeconds / 60))}분 · ${(
+                            routeLegs[index].distanceMeters / 1000
+                          ).toFixed(1)}km`
+                        : '경로 정보 없음'}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           ))}
         </View>
@@ -217,7 +293,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3EFE5',
   },
   emptyText: { paddingVertical: 24, textAlign: 'center', fontSize: 14, color: '#888888' },
-  placeRow: { minHeight: 94, flexDirection: 'row', gap: 14, paddingBottom: 24 },
+  routeError: { marginBottom: 16, textAlign: 'center', fontSize: 13, color: '#B05264' },
+  itineraryBlock: { marginBottom: 22 },
+  placeRow: { minHeight: 70, flexDirection: 'row', gap: 14 },
   timelineColumn: { position: 'relative', alignItems: 'center' },
   numberCircle: {
     width: 38,
@@ -231,4 +309,17 @@ const styles = StyleSheet.create({
   placeTextArea: { flex: 1 },
   placeTitle: { fontSize: 19, fontWeight: '600', color: '#111111' },
   placeReason: { marginTop: 6, fontSize: 13, lineHeight: 18, color: '#555555' },
+  routeBubble: {
+    minHeight: 42,
+    marginTop: 12,
+    marginLeft: 50,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+  },
+  routeText: { fontSize: 13, color: '#333333' },
 });

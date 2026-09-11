@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { CourseMapPlace } from './GoogleCourseMap';
+import type { RoutePoint } from '../../api/routes';
 
-type Props = { places: CourseMapPlace[] };
+type Props = { places: CourseMapPlace[]; routePaths?: RoutePoint[][] };
 
 type MapInstance = {
   fitBounds: (bounds: unknown, padding?: number) => void;
@@ -16,6 +17,7 @@ type MapOverlay = { setMap: (map: MapInstance | null) => void };
 type GoogleMapsApi = {
   Map: new (element: HTMLElement, options: Record<string, unknown>) => MapInstance;
   Marker: new (options: Record<string, unknown>) => MapOverlay;
+  Polyline: new (options: Record<string, unknown>) => MapOverlay;
   Size: new (width: number, height: number) => unknown;
   Point: new (x: number, y: number) => unknown;
   LatLngBounds: new () => { extend: (point: { lat: number; lng: number }) => void };
@@ -48,7 +50,7 @@ function loadGoogleMaps(apiKey: string) {
   return window.__optripGoogleMapsPromise;
 }
 
-export function GoogleCourseMap({ places }: Props) {
+export function GoogleCourseMap({ places, routePaths = [] }: Props) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const overlaysRef = useRef<MapOverlay[]>([]);
@@ -97,6 +99,19 @@ export function GoogleCourseMap({ places }: Props) {
     const bounds = new mapsApi.LatLngBounds();
     const path = places.map((place) => ({ lat: place.latitude, lng: place.longitude }));
 
+    routePaths.forEach((routePath) => {
+      if (routePath.length < 2) return;
+      overlays.push(
+        new mapsApi.Polyline({
+          map,
+          path: routePath,
+          strokeColor: '#A92F50',
+          strokeOpacity: 0.9,
+          strokeWeight: 4,
+        }),
+      );
+    });
+
     places.forEach((place, index) => {
       const position = { lat: place.latitude, lng: place.longitude };
       bounds.extend(position);
@@ -129,7 +144,7 @@ export function GoogleCourseMap({ places }: Props) {
     }
 
     overlaysRef.current = overlays;
-  }, [mapsApi, places]);
+  }, [mapsApi, places, routePaths]);
 
   if (!apiKey) {
     return (
