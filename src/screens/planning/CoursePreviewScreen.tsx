@@ -6,80 +6,26 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { GoogleCourseMap } from '../../components/planning/GoogleCourseMap';
-import { getPlaceDisplayTitle, type PlaceSummary } from '../../api/places';
-import {
-  decodeGooglePolyline,
-  getRouteLeg,
-  type RouteLeg,
-  type RouteTravelMode,
-} from '../../api/routes';
+import { getPlaceDisplayTitle } from '../../api/places';
+import { createItinerary, type ItineraryResponse } from '../../api/itinerary';
+import { decodeGooglePolyline } from '../../api/routes';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
-import { buildCourseSchedule } from '../../lib/buildCourseSchedule';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CoursePreview'>;
-const EMPTY_PLACES: PlaceSummary[] = [];
 
-function getVehicleLabel(vehicleType: string) {
-  switch (vehicleType) {
-    case 'BUS':
-    case 'INTERCITY_BUS':
-    case 'TROLLEYBUS':
-      return '버스';
-    case 'SUBWAY':
-      return '지하철';
-    case 'HEAVY_RAIL':
-    case 'COMMUTER_TRAIN':
-    case 'HIGH_SPEED_TRAIN':
-    case 'LONG_DISTANCE_TRAIN':
-    case 'RAIL':
-      return '기차';
-    case 'LIGHT_RAIL':
-    case 'TRAM':
-      return '경전철';
-    case 'FERRY':
-      return '배';
-    default:
-      return '대중교통';
-  }
-}
-
-function getRouteIcon(leg: RouteLeg | undefined, selectedTransport: 'public' | 'car') {
+function getRouteIcon(mode: string | undefined, selectedTransport: 'public' | 'car') {
   if (selectedTransport === 'car') return 'car-outline' as const;
-  const vehicleType = leg?.transitSteps[0]?.vehicleType;
-  if (vehicleType === 'SUBWAY') return 'subway-outline' as const;
-  if (vehicleType?.includes('RAIL') || vehicleType?.includes('TRAIN')) {
-    return 'train-outline' as const;
-  }
+  if (mode === '도보') return 'walk-outline' as const;
   return 'bus-outline' as const;
 }
 
-function getRouteSummary(leg: RouteLeg, selectedTransport: 'public' | 'car') {
-  const minutes = Math.max(1, Math.round(leg.durationSeconds / 60));
-
-  if (selectedTransport === 'car') return `자동차 · 약 ${minutes}분 소요`;
-
-  const vehicleLabels = [
-    ...new Set(leg.transitSteps.map((step) => getVehicleLabel(step.vehicleType))),
-  ];
-  const busNumbers = [
-    ...new Set(
-      leg.transitSteps
-        .filter((step) => getVehicleLabel(step.vehicleType) === '버스')
-        .map((step) => step.lineName.match(/^\s*(\d+(?:-\d+)?[A-Za-z]?)/)?.[1])
-        .filter((name): name is string => Boolean(name)),
-    ),
-  ];
-  const transferCount = Math.max(0, leg.transitSteps.length - 1);
-  const displayLabels = vehicleLabels.map((label) => {
-    if (label !== '버스' || busNumbers.length === 0) return label;
-    return `${busNumbers.map((number) => `${number}번`).join('·')} 버스`;
-  });
-  const transportText = displayLabels.length > 0 ? `${displayLabels.join('·')} 이용` : '대중교통';
-  const transferText = transferCount > 0 ? ` · ${transferCount}회 환승` : '';
-
-  return `${transportText}${transferText} · 약 ${minutes}분 소요`;
+function getTravelDays(start: string | null, end: string | null, noSpecificDate: boolean) {
+  if (noSpecificDate || !start) return 1;
+  const first = new Date(`${start}T00:00:00Z`).getTime();
+  const last = new Date(`${end ?? start}T00:00:00Z`).getTime();
+  return Math.max(1, Math.min(4, Math.floor((last - first) / 86400000) + 1));
 }
 
 export function CoursePreviewScreen() {
@@ -89,31 +35,15 @@ export function CoursePreviewScreen() {
   const regionName = plan.selectedRegion?.name ?? '여행지';
   const displayName = profile.name || '여행자';
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [routeLegs, setRouteLegs] = useState<RouteLeg[]>([]);
+  const [itinerary, setItinerary] = useState<ItineraryResponse | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
   const selectedTransport = plan.transport ?? 'public';
 
-  const selectedPlaces = useMemo(() => {
-    const recommendations = plan.placeRecommendations;
-    const allPlaces = [...(recommendations?.core ?? []), ...(recommendations?.suggestions ?? [])];
-    return plan.selectedPlaceIds
-      .map((contentId) => allPlaces.find((place) => place.contentId === contentId))
-      .filter((place): place is PlaceSummary => Boolean(place));
-  }, [plan.placeRecommendations, plan.selectedPlaceIds]);
-
-  const courseDays = useMemo(
-    () =>
-      buildCourseSchedule(
-        selectedPlaces,
-        plan.placeRecommendations?.core ?? [],
-        plan.dateRange,
-        plan.noSpecificDate,
-      ),
-    [plan.dateRange, plan.noSpecificDate, plan.placeRecommendations?.core, selectedPlaces],
-  );
+  const courseDays = itinerary?.days ?? [];
   const selectedDay = courseDays[selectedDayIndex] ?? courseDays[0];
-  const visiblePlaces = selectedDay?.places ?? EMPTY_PLACES;
+  const visibleItems = useMemo(() => selectedDay?.items ?? [], [selectedDay]);
+  const visiblePlaces = visibleItems.map((item) => item.place);
 
   useEffect(() => {
     if (selectedDayIndex >= courseDays.length) setSelectedDayIndex(0);
@@ -131,35 +61,22 @@ export function CoursePreviewScreen() {
   );
 
   useEffect(() => {
-    if (visiblePlaces.length < 2) {
-      setRouteLegs([]);
-      setRouteError(null);
-      return;
-    }
-
     let active = true;
-    const travelMode: RouteTravelMode = selectedTransport === 'public' ? 'TRANSIT' : 'DRIVE';
     setRouteLoading(true);
     setRouteError(null);
 
-    Promise.all(
-      visiblePlaces.slice(0, -1).map((place, index) => {
-        const nextPlace = visiblePlaces[index + 1];
-        return getRouteLeg({
-          originLatitude: place.mapy,
-          originLongitude: place.mapx,
-          destinationLatitude: nextPlace.mapy,
-          destinationLongitude: nextPlace.mapx,
-          travelMode,
-        });
-      }),
-    )
-      .then((legs) => {
-        if (active) setRouteLegs(legs);
+    createItinerary({
+      placeIds: plan.selectedPlaceIds,
+      transport: selectedTransport === 'public' ? '대중교통' : '자동차',
+      days: getTravelDays(plan.dateRange.start, plan.dateRange.end, plan.noSpecificDate),
+      optimizeOrder: true,
+    })
+      .then((response) => {
+        if (active) setItinerary(response);
       })
       .catch((reason: unknown) => {
         if (!active) return;
-        setRouteLegs([]);
+        setItinerary(null);
         setRouteError(reason instanceof Error ? reason.message : '경로를 불러오지 못했어요.');
       })
       .finally(() => {
@@ -169,11 +86,21 @@ export function CoursePreviewScreen() {
     return () => {
       active = false;
     };
-  }, [selectedTransport, visiblePlaces]);
+  }, [
+    plan.dateRange.end,
+    plan.dateRange.start,
+    plan.noSpecificDate,
+    plan.selectedPlaceIds,
+    selectedTransport,
+  ]);
 
   const routePaths = useMemo(
-    () => routeLegs.map((leg) => decodeGooglePolyline(leg.encodedPolyline)),
-    [routeLegs],
+    () =>
+      visibleItems
+        .map((item) => item.legToNext?.encodedPolyline)
+        .filter((polyline): polyline is string => Boolean(polyline))
+        .map(decodeGooglePolyline),
+    [visibleItems],
   );
 
   return (
@@ -241,12 +168,12 @@ export function CoursePreviewScreen() {
             const selected = index === selectedDayIndex;
             return (
               <Pressable
-                key={`${day.dayNumber}-${day.date ?? 'undecided'}`}
+                key={day.day}
                 onPress={() => setSelectedDayIndex(index)}
                 style={[styles.dayTab, selected && styles.dayTabSelected]}
               >
                 <Text style={selected ? styles.daySelectedText : styles.dayText}>
-                  DAY {day.dayNumber}
+                  DAY {day.day}
                 </Text>
               </Pressable>
             );
@@ -258,7 +185,7 @@ export function CoursePreviewScreen() {
           {visiblePlaces.length === 0 ? (
             <Text style={styles.emptyText}>이 날짜에 배치할 장소가 아직 없어요.</Text>
           ) : null}
-          {visiblePlaces.map((place, index) => (
+          {visibleItems.map(({ place, legToNext }, index) => (
             <View key={place.contentId} style={styles.itineraryBlock}>
               <View style={styles.placeRow}>
                 <View style={styles.timelineColumn}>
@@ -270,21 +197,21 @@ export function CoursePreviewScreen() {
                   <Text style={styles.placeTitle}>
                     {getPlaceDisplayTitle(place.title, regionName)}
                   </Text>
-                  <Text style={styles.placeReason}>{place.reason}</Text>
+                  <Text style={styles.placeReason}>{place.addr1}</Text>
                 </View>
               </View>
               {index < visiblePlaces.length - 1 ? (
                 <View style={styles.routeBubble}>
                   <Ionicons
-                    name={getRouteIcon(routeLegs[index], selectedTransport)}
+                    name={getRouteIcon(legToNext?.mode, selectedTransport)}
                     size={20}
                     color="#222222"
                   />
                   <Text style={styles.routeText}>
-                    {routeLoading && !routeLegs[index]
+                    {routeLoading && !legToNext
                       ? '경로 계산 중...'
-                      : routeLegs[index]
-                        ? getRouteSummary(routeLegs[index], selectedTransport)
+                      : legToNext
+                        ? legToNext.summary
                         : '경로 정보 없음'}
                   </Text>
                 </View>

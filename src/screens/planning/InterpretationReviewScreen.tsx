@@ -1,27 +1,58 @@
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import { interpretTravel } from '../../api/interpret';
+import { COMPANION_LABEL, PREFERENCE_LABEL } from '../../lib/labels';
+import { usePlanning } from '../../lib/planningStore';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'InterpretationReview'>;
 
-const LINE_BREAK = String.fromCharCode(10);
-const MOCK_SUMMARY = [
-  '단풍이 아름답고',
-  '자연으로 둘러싸인 곳에서',
-  '한가롭게 힐링하고,',
-  '맛있는 것을 많이 먹으러',
-  '다니는 여행',
-].join(LINE_BREAK);
-const SUBTITLE = ['일정을 만들기 전에', '잘못 이해한 부분이 없는지 확인해주세요.'].join(
-  LINE_BREAK,
-);
+const SUBTITLE = ['일정을 만들기 전에', '잘못 이해한 부분이 없는지 확인해주세요.'].join('\n');
 
 export function InterpretationReviewScreen() {
   const navigation = useNavigation<Nav>();
+  const { plan, setInterpretation } = usePlanning();
+  const [loading, setLoading] = useState(!plan.interpretation);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (plan.interpretation) return;
+    let active = true;
+    const purposes = plan.preferences.map((preference) => PREFERENCE_LABEL[preference]);
+    const dates = [plan.dateRange.start, plan.dateRange.end].filter((date): date is string =>
+      Boolean(date),
+    );
+
+    interpretTravel({
+      text: purposes.join(', '),
+      dates,
+      companion: plan.companion ? COMPANION_LABEL[plan.companion] : '',
+      destinations: [],
+    })
+      .then((result) => {
+        if (!active) return;
+        setInterpretation(result);
+        if (result.purposes.length === 0) navigation.replace('PreferenceCorrection');
+      })
+      .catch(() => active && setError('여행 내용을 해석하지 못했어요.'))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [
+    navigation,
+    plan.companion,
+    plan.dateRange.end,
+    plan.dateRange.start,
+    plan.interpretation,
+    plan.preferences,
+    setInterpretation,
+  ]);
 
   return (
     <SafeAreaView
@@ -46,18 +77,24 @@ export function InterpretationReviewScreen() {
         <Text style={styles.subtitle}>{SUBTITLE}</Text>
 
         <View style={styles.summaryBox}>
-          <Text style={styles.summary}>{MOCK_SUMMARY}</Text>
+          {loading ? <ActivityIndicator color="#9A9D66" /> : null}
+          {error ? <Text style={styles.summary}>{error}</Text> : null}
+          {!loading && !error ? (
+            <Text style={styles.summary}>{plan.interpretation?.summary ?? ''}</Text>
+          ) : null}
         </View>
 
         <View style={styles.actions}>
           <Pressable
             style={styles.actionButton}
+            disabled={loading || Boolean(error)}
             onPress={() => navigation.navigate('PreferenceCorrection')}
           >
             <Text style={styles.actionText}>잘못 이해했어요</Text>
           </Pressable>
           <Pressable
             style={styles.actionButton}
+            disabled={loading || Boolean(error)}
             onPress={() => navigation.navigate('RegionCandidates')}
           >
             <Text style={styles.actionText}>제대로 이해했어요</Text>

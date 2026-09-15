@@ -14,8 +14,6 @@ import { ScheduleScreen } from '../screens/planning/ScheduleScreen';
 import { CompanionScreen } from '../screens/planning/CompanionScreen';
 import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
 import { TransportScreen } from '../screens/planning/TransportScreen';
-import { LoadingScreen } from '../screens/planning/LoadingScreen';
-import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
 import { InterpretationReviewScreen } from '../screens/planning/InterpretationReviewScreen';
 import { PreferenceCorrectionScreen } from '../screens/planning/PreferenceCorrectionScreen';
 import { RegionCandidatesPlaceholderScreen } from '../screens/planning/RegionCandidatesPlaceholderScreen';
@@ -101,12 +99,6 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         name="Transport"
         component={TransportScreen}
         options={{ animation: 'slide_from_right' }}
-      />
-      <Stack.Screen name="Loading" component={LoadingScreen} options={{ animation: 'fade' }} />
-      <Stack.Screen
-        name="Recommendation"
-        component={RecommendationScreen}
-        options={{ animation: 'fade' }}
       />
       <Stack.Screen
         name="InterpretationReview"

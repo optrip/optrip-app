@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getPlaceDisplayTitle, recommendPlaces } from '../../api/places';
+import { PREFERENCE_LABEL } from '../../lib/labels';
 import { usePlanning } from '../../lib/planningStore';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
@@ -31,7 +32,14 @@ export function CorePlacesScreen() {
     setError(null);
 
     try {
-      const response = await recommendPlaces();
+      if (!plan.selectedRegion) throw new Error('선택한 지역이 없어요.');
+      const response = await recommendPlaces({
+        lDongRegnCd: plan.selectedRegion.lDongRegnCd,
+        lDongSignguCd: plan.selectedRegion.lDongSignguCd,
+        purposes:
+          plan.interpretation?.purposes ??
+          plan.preferences.map((preference) => PREFERENCE_LABEL[preference]),
+      });
       setPlaceRecommendations(response);
     } catch {
       setError('장소 정보를 불러오지 못했어요.');
@@ -90,7 +98,13 @@ export function CorePlacesScreen() {
           >
             {corePlaces.map((place) => (
               <View key={place.contentId} style={styles.placeRow}>
-                <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
+                {place.imageUrl ? (
+                  <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
+                ) : (
+                  <View style={[styles.placeImage, styles.imagePlaceholder]}>
+                    <Ionicons name="image-outline" size={28} color="#999999" />
+                  </View>
+                )}
                 <View style={styles.placeContent}>
                   <View style={styles.placeHeading}>
                     <Text
@@ -148,6 +162,7 @@ const styles = StyleSheet.create({
   list: { gap: 44, paddingBottom: 24 },
   placeRow: { minHeight: 118, flexDirection: 'row', gap: 16 },
   placeImage: { width: 90, height: 110, borderRadius: 10, backgroundColor: '#E5E5E5' },
+  imagePlaceholder: { alignItems: 'center', justifyContent: 'center' },
   placeContent: { flex: 1, paddingTop: 2 },
   placeHeading: {
     flexDirection: 'row',

@@ -54,25 +54,3 @@ export type CourseListResponse = {
   regionName: string;
   courses: Course[];
 };
-
-const BASE_URL = 'https://optrip-server.fly.dev';
-
-async function postJson<T>(path: string, body: RecommendRequest): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(`${path} failed: ${res.status}`);
-  }
-  return (await res.json()) as T;
-}
-
-export function recommendRegion(body: RecommendRequest): Promise<RegionResponse> {
-  return postJson<RegionResponse>('/api/recommend/region', body);
-}
-
-export function recommendCourses(body: RecommendRequest): Promise<CourseListResponse> {
-  return postJson<CourseListResponse>('/api/recommend/courses', body);
-}

@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { OnboardingStackParamList, Preference } from '../../navigation/types';
+import { usePlanning } from '../../lib/planningStore';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'PreferenceCorrection'>;
 
@@ -34,6 +35,7 @@ const MAX_SELECT = 3;
 
 export function PreferenceCorrectionScreen() {
   const navigation = useNavigation<Nav>();
+  const { setPreferences, setInterpretation } = usePlanning();
   const [selected, setSelected] = useState<Preference[]>([]);
 
   const toggle = (value: Preference) => {
@@ -45,6 +47,8 @@ export function PreferenceCorrectionScreen() {
   };
 
   const submit = () => {
+    setPreferences(selected);
+    setInterpretation(null);
     navigation.navigate('RegionCandidates');
   };
 
@@ -68,30 +72,30 @@ export function PreferenceCorrectionScreen() {
 
       <View style={styles.body}>
         <View style={styles.content}>
-        <Text style={styles.title}>원하는 여행을 다시 골라주세요</Text>
-        <Text style={styles.subtitle}>최대 3개까지 고를 수 있어요</Text>
+          <Text style={styles.title}>원하는 여행을 다시 골라주세요</Text>
+          <Text style={styles.subtitle}>최대 3개까지 고를 수 있어요</Text>
 
-        <View style={styles.grid}>
-          {OPTIONS.map((option) => {
-            const isSelected = selected.includes(option.value);
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => toggle(option.value)}
-                style={[styles.option, isSelected && styles.optionSelected]}
-              >
-                <Ionicons
-                  name={option.icon}
-                  size={25}
-                  color={isSelected ? '#FFFFFF' : '#A9AD70'}
-                />
-                <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+          <View style={styles.grid}>
+            {OPTIONS.map((option) => {
+              const isSelected = selected.includes(option.value);
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => toggle(option.value)}
+                  style={[styles.option, isSelected && styles.optionSelected]}
+                >
+                  <Ionicons
+                    name={option.icon}
+                    size={25}
+                    color={isSelected ? '#FFFFFF' : '#A9AD70'}
+                  />
+                  <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </View>
 

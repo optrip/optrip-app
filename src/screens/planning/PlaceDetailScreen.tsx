@@ -83,7 +83,7 @@ export function PlaceDetailScreen() {
         <View style={styles.content}>
           <View style={styles.hero}>
             <ImageBackground
-              source={{ uri: place.imageUrl }}
+              source={place.imageUrl ? { uri: place.imageUrl } : undefined}
               style={styles.heroImage}
               imageStyle={styles.heroImageStyle}
             />
@@ -98,7 +98,7 @@ export function PlaceDetailScreen() {
                 contentContainerStyle={styles.detailScrollContent}
                 showsVerticalScrollIndicator
               >
-                <Text style={styles.overview}>{place.overview}</Text>
+                <Text style={styles.overview}>{place.overview ?? '상세 설명이 아직 없어요.'}</Text>
 
                 <View style={styles.infoList}>
                   <InfoRow label="이용 시간" value={place.useTime} />
@@ -115,7 +115,8 @@ export function PlaceDetailScreen() {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>

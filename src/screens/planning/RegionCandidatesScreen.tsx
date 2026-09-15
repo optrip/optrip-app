@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { getMockRegionRecommendations, type RegionCandidate } from '../../api/regions';
+import { recommendRegions, type RegionCandidate } from '../../api/regions';
+import { PREFERENCE_LABEL } from '../../lib/labels';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
 import type { OnboardingStackParamList } from '../../navigation/types';
@@ -17,11 +18,20 @@ export function RegionCandidatesScreen() {
   const { profile } = useOnboarding();
   const { plan } = usePlanning();
   const [regions, setRegions] = useState<RegionCandidate[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const displayName = profile.name || 'ㅇㅇ';
 
   useEffect(() => {
-    getMockRegionRecommendations().then((response) => setRegions(response.regions));
-  }, []);
+    recommendRegions({
+      purposes:
+        plan.interpretation?.purposes ??
+        plan.preferences.map((preference) => PREFERENCE_LABEL[preference]),
+      excludeRegions: plan.excludeRegions,
+      limit: 3,
+    })
+      .then((response) => setRegions(response.regions))
+      .catch(() => setError('여행지 후보를 불러오지 못했어요.'));
+  }, [plan.excludeRegions, plan.interpretation?.purposes, plan.preferences]);
 
   return (
     <SafeAreaView
@@ -44,6 +54,7 @@ export function RegionCandidatesScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>{displayName}님을 위한 추천 여행지</Text>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <View style={styles.list}>
           {regions.map((region) => {
             const selected = plan.selectedRegion?.name === region.name;
@@ -108,6 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   list: { gap: 20 },
+  errorText: { marginBottom: 16, textAlign: 'center', color: '#B05264' },
   card: {
     height: 158,
     borderRadius: 27,

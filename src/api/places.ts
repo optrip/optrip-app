@@ -4,7 +4,7 @@ export type PlaceSummary = {
   addr1: string;
   mapx: number;
   mapy: number;
-  imageUrl: string;
+  imageUrl: string | null;
   purpose: string;
   reason: string;
 };
@@ -26,12 +26,14 @@ export type PlaceDetail = {
   addr1: string;
   mapx: number;
   mapy: number;
-  imageUrl: string;
-  overview: string;
-  useTime: string;
-  restDate: string;
-  parking: string;
-  fee: string;
+  imageUrl: string | null;
+  tel: string | null;
+  homepage: string | null;
+  overview: string | null;
+  useTime: string | null;
+  restDate: string | null;
+  parking: string | null;
+  fee: string | null;
   accessibility: PlaceAccessibility;
 };
 
@@ -44,10 +46,21 @@ export function getPlaceDisplayTitle(title: string, regionName: string | undefin
   return regionPrefix && title.startsWith(regionPrefix) ? title.slice(regionPrefix.length) : title;
 }
 
-export async function recommendPlaces(): Promise<PlaceRecommendationsResponse> {
+export type PlaceRecommendationsRequest = {
+  lDongRegnCd: string;
+  lDongSignguCd: string;
+  purposes: string[];
+  coreCount?: number;
+  suggestionCount?: number;
+};
+
+export async function recommendPlaces(
+  request: PlaceRecommendationsRequest,
+): Promise<PlaceRecommendationsResponse> {
   const response = await fetch(`${BASE_URL}/api/recommend/places`, {
     method: 'POST',
-    headers: { Accept: '*/*' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(request),
   });
 
   if (!response.ok) {

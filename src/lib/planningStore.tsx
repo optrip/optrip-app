@@ -3,6 +3,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import type { CourseListResponse, RegionResponse } from '../api/recommend';
 import type { PlaceRecommendationsResponse } from '../api/places';
 import type { RegionCandidate } from '../api/regions';
+import type { InterpretResult } from '../api/interpret';
 import type { Companion, Preference, TransportMode } from '../navigation/types';
 
 export type DateRange = {
@@ -17,6 +18,7 @@ export type PlanningState = {
   companion: Companion | null;
   preferences: Preference[];
   transport: TransportMode | null;
+  interpretation: InterpretResult | null;
   result: RegionResponse | null; // 현재 추천된 지역 (Image #1)
   selectedRegion: RegionCandidate | null;
   placeRecommendations: PlaceRecommendationsResponse | null;
@@ -33,7 +35,9 @@ type PlanningContextValue = {
   setNoSpecificDate: (v: boolean) => void;
   setCompanion: (c: Companion) => void;
   togglePreference: (p: Preference) => void;
+  setPreferences: (preferences: Preference[]) => void;
   setTransport: (t: TransportMode) => void;
+  setInterpretation: (result: InterpretResult | null) => void;
   setResult: (r: RegionResponse | null) => void;
   setSelectedRegion: (region: RegionCandidate | null) => void;
   setPlaceRecommendations: (places: PlaceRecommendationsResponse | null) => void;
@@ -51,6 +55,7 @@ const initial: PlanningState = {
   companion: null,
   preferences: [],
   transport: null,
+  interpretation: null,
   result: null,
   selectedRegion: null,
   placeRecommendations: null,
@@ -86,7 +91,9 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
           if (p.preferences.length >= 5) return p;
           return { ...p, preferences: [...p.preferences, pref] };
         }),
+      setPreferences: (preferences) => setPlan((p) => ({ ...p, preferences })),
       setTransport: (transport) => setPlan((p) => ({ ...p, transport })),
+      setInterpretation: (interpretation) => setPlan((p) => ({ ...p, interpretation })),
       // 새 지역을 받으면 이전에 보던 코스는 무효화
       setResult: (result) => setPlan((p) => ({ ...p, result, courses: null, error: null })),
       setSelectedRegion: (selectedRegion) =>

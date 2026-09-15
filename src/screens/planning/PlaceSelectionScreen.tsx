@@ -131,7 +131,13 @@ export function PlaceSelectionScreen() {
                 key={place.contentId}
                 style={[styles.suggestionRow, limitReached && styles.disabled]}
               >
-                <Image source={{ uri: place.imageUrl }} style={styles.suggestionImage} />
+                {place.imageUrl ? (
+                  <Image source={{ uri: place.imageUrl }} style={styles.suggestionImage} />
+                ) : (
+                  <View style={[styles.suggestionImage, styles.imagePlaceholder]}>
+                    <Ionicons name="image-outline" size={24} color="#999999" />
+                  </View>
+                )}
                 <View style={styles.suggestionContent}>
                   <Text style={styles.suggestionName} numberOfLines={1}>
                     {getPlaceDisplayTitle(place.title, regionName)}
@@ -238,6 +244,7 @@ const styles = StyleSheet.create({
   suggestionRow: { minHeight: 88, flexDirection: 'row', gap: 14 },
   disabled: { opacity: 0.45 },
   suggestionImage: { width: 86, height: 86, borderRadius: 7, backgroundColor: '#E5E5E5' },
+  imagePlaceholder: { alignItems: 'center', justifyContent: 'center' },
   suggestionContent: { flex: 1 },
   suggestionName: { fontSize: 20, fontWeight: '600', color: '#111111' },
   suggestionReason: { marginTop: 2, fontSize: 12, color: '#555555' },

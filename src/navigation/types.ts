@@ -40,8 +40,6 @@ export type OnboardingStackParamList = {
   Companion: undefined;
   Preference: undefined;
   Transport: undefined;
-  Loading: undefined;
-  Recommendation: undefined;
   InterpretationReview: undefined;
   PreferenceCorrection: undefined;
   RegionCandidatesPlaceholder: undefined;

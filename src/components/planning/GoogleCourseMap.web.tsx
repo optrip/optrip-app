@@ -88,7 +88,7 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
     return () => {
       active = false;
     };
-  }, [apiKey]);
+  }, [apiKey, places.length]);
 
   useEffect(() => {
     const map = mapRef.current;
