@@ -4,7 +4,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { CourseMapPlace } from './GoogleCourseMap';
 import type { RoutePoint } from '../../api/routes';
 
-type Props = { places: CourseMapPlace[]; routePaths?: RoutePoint[][] };
+type Props = {
+  places: CourseMapPlace[];
+  routePaths?: RoutePoint[][];
+  connectionPaths?: RoutePoint[][];
+};
 
 type MapInstance = {
   fitBounds: (bounds: unknown, padding?: number) => void;
@@ -50,7 +54,7 @@ function loadGoogleMaps(apiKey: string) {
   return window.__optripGoogleMapsPromise;
 }
 
-export function GoogleCourseMap({ places, routePaths = [] }: Props) {
+export function GoogleCourseMap({ places, routePaths = [], connectionPaths = [] }: Props) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const overlaysRef = useRef<MapOverlay[]>([]);
@@ -73,8 +77,19 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
             zoom: 13,
             mapTypeControl: false,
             streetViewControl: false,
-            fullscreenControl: false,
-            zoomControl: true,
+            fullscreenControl: true,
+            zoomControl: false,
+            cameraControl: false,
+            styles: [
+              { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+              {
+                featureType: 'landscape',
+                elementType: 'geometry',
+                stylers: [{ color: '#F3F2EE' }],
+              },
+              { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#E7EDDF' }] },
+              { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#DCEAF1' }] },
+            ],
           });
         }
         setMapsApi(maps);
@@ -88,13 +103,15 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
     return () => {
       active = false;
     };
-  }, [apiKey, places.length]);
+  }, [apiKey]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!mapsApi || !map || places.length === 0) return;
+    if (!mapsApi || !map) return;
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
+    overlaysRef.current = [];
+    if (places.length === 0) return;
     const overlays: MapOverlay[] = [];
     const bounds = new mapsApi.LatLngBounds();
     const path = places.map((place) => ({ lat: place.latitude, lng: place.longitude }));
@@ -105,9 +122,26 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
         new mapsApi.Polyline({
           map,
           path: routePath,
-          strokeColor: '#A92F50',
-          strokeOpacity: 0.9,
-          strokeWeight: 4,
+          strokeColor: '#24443A',
+          strokeOpacity: 0.85,
+          strokeWeight: 3,
+        }),
+      );
+    });
+    connectionPaths.forEach((path) => {
+      if (path.length < 2) return;
+      overlays.push(
+        new mapsApi.Polyline({
+          map,
+          path,
+          strokeOpacity: 0,
+          icons: [
+            {
+              icon: { path: 'M 0,-1 0,1', strokeColor: '#6F8A7D', strokeOpacity: 0.6, scale: 1.5 },
+              offset: '0',
+              repeat: '10px',
+            },
+          ],
         }),
       );
     });
@@ -124,7 +158,7 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
             url:
               'data:image/svg+xml;charset=UTF-8,' +
               encodeURIComponent(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="13" fill="#A92F50" stroke="#FFFFFF" stroke-width="2"/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="13" fill="#24443A" stroke="#FFFFFF" stroke-width="2"/></svg>',
               ),
             scaledSize: new mapsApi.Size(30, 30),
             anchor: new mapsApi.Point(15, 15),
@@ -137,14 +171,14 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
     });
 
     if (path.length > 1) {
-      map.fitBounds(bounds, 56);
+      map.fitBounds(bounds, 28);
     } else {
       map.setCenter(path[0]);
       map.setZoom(14);
     }
 
     overlaysRef.current = overlays;
-  }, [mapsApi, places, routePaths]);
+  }, [mapsApi, places, routePaths, connectionPaths]);
 
   if (!apiKey) {
     return (
@@ -154,17 +188,14 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
     );
   }
 
-  if (places.length === 0) {
-    return (
-      <View style={styles.messageBox}>
-        <Text style={styles.message}>지도에 표시할 장소가 없어요.</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.wrapper}>
       <View ref={containerRef} style={styles.map} />
+      {places.length === 0 && (
+        <View style={styles.errorOverlay}>
+          <Text style={styles.message}>이 날짜에는 선택한 장소가 없어요.</Text>
+        </View>
+      )}
       {error ? (
         <View style={styles.errorOverlay}>
           <Text style={styles.message}>{error}</Text>
@@ -175,10 +206,10 @@ export function GoogleCourseMap({ places, routePaths = [] }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { height: 210, overflow: 'hidden', borderRadius: 18, backgroundColor: '#ECE9E0' },
+  wrapper: { height: 220, overflow: 'hidden', borderRadius: 15, backgroundColor: '#ECE9E0' },
   map: { flex: 1 },
   messageBox: {
-    height: 210,
+    height: 180,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,

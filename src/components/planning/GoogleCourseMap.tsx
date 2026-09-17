@@ -12,6 +12,7 @@ export type CourseMapPlace = {
 type Props = {
   places: CourseMapPlace[];
   routePaths?: RoutePoint[][];
+  connectionPaths?: RoutePoint[][];
 };
 
 export function GoogleCourseMap({ places }: Props) {
@@ -25,7 +26,7 @@ export function GoogleCourseMap({ places }: Props) {
 
 const styles = StyleSheet.create({
   fallback: {
-    height: 210,
+    height: 180,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,

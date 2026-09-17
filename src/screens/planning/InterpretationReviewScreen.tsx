@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,8 +19,6 @@ import { usePlanning } from '../../lib/planningStore';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'InterpretationReview'>;
-
-const SUBTITLE = ['일정을 만들기 전에', '잘못 이해한 부분이 없는지 확인해주세요.'].join('\n');
 
 export function InterpretationReviewScreen() {
   const navigation = useNavigation<Nav>();
@@ -61,128 +67,179 @@ export function InterpretationReviewScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconButton}>
-          <Ionicons name="chevron-back" size={32} color="#222222" />
+          <Ionicons name="chevron-back" size={22} color="#262B28" />
         </Pressable>
+        <Text style={styles.headerTitle}>해석 확인</Text>
         <Pressable
           onPress={() => navigation.navigate('Home')}
           hitSlop={12}
           style={styles.iconButton}
         >
-          <Ionicons name="home-outline" size={32} color="#222222" />
+          <Ionicons name="home-outline" size={22} color="#262B28" />
         </Pressable>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>이렇게 이해했어요</Text>
-        <Text style={styles.subtitle}>{SUBTITLE}</Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>당신의 여행을{'\n'}이렇게 이해했어요</Text>
+        <Text style={styles.subtitle}>실제 추천에 반영될 조건을 한 번만 확인해주세요.</Text>
 
         <View style={styles.summaryBox}>
           {loading ? <ActivityIndicator color="#9A9D66" /> : null}
           {error ? <Text style={styles.summary}>{error}</Text> : null}
           {!loading && !error ? (
-            <Text style={styles.summary}>{plan.interpretation?.summary ?? ''}</Text>
+            <>
+              <Text style={styles.summary}>{plan.interpretation?.summary ?? ''}</Text>
+              <Text style={styles.summaryCaption}>
+                내가 쓴 표현을 추천 가능한 조건으로 정리했어요.
+              </Text>
+            </>
           ) : null}
         </View>
 
-        <View style={styles.actions}>
-          <Pressable
-            style={styles.actionButton}
-            disabled={loading || Boolean(error)}
-            onPress={() => navigation.navigate('PreferenceCorrection')}
-          >
-            <Text style={styles.actionText}>잘못 이해했어요</Text>
-          </Pressable>
-          <Pressable
-            style={styles.actionButton}
-            disabled={loading || Boolean(error)}
-            onPress={() => navigation.navigate('RegionCandidates')}
-          >
-            <Text style={styles.actionText}>제대로 이해했어요</Text>
-          </Pressable>
-        </View>
+        {!loading && !error && plan.interpretation ? (
+          <>
+            <Text style={styles.sectionTitle}>이번 추천에 반영할 취향</Text>
+            <View style={styles.chips}>
+              {plan.interpretation.purposes.map((purpose) => (
+                <View key={purpose} style={styles.chip}>
+                  <Text style={styles.chipText}>{purpose}</Text>
+                </View>
+              ))}
+            </View>
+
+            {plan.interpretation.mappings && plan.interpretation.mappings.length > 0 ? (
+              <View style={styles.mappingsBox}>
+                {plan.interpretation.mappings.map((mapping, index) => (
+                  <View key={`${mapping.phrase}-${index}`} style={styles.mappingRow}>
+                    <Text style={styles.phrase} numberOfLines={2}>
+                      “{mapping.phrase}”
+                    </Text>
+                    <Text style={styles.mappingResult} numberOfLines={2}>
+                      → {mapping.purposes.join(' · ')}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </>
+        ) : null}
+      </ScrollView>
+
+      <View style={styles.actions}>
+        <Pressable
+          style={[styles.actionButton, (loading || Boolean(error)) && styles.disabledButton]}
+          disabled={loading || Boolean(error)}
+          onPress={() => navigation.navigate('PreferenceCorrection')}
+        >
+          <Text style={styles.actionText}>직접 수정하기</Text>
+          <Ionicons name="chevron-forward" size={19} color="#262B28" />
+        </Pressable>
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.primaryButton,
+            (loading || Boolean(error)) && styles.disabledButton,
+          ]}
+          disabled={loading || Boolean(error)}
+          onPress={() => navigation.navigate('RegionCandidates')}
+        >
+          <Text style={styles.primaryText}>이 조건으로 추천받기</Text>
+          <Ionicons name="chevron-forward" size={19} color="#FFFFFF" />
+        </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F9F7F2',
-  },
-  webSafe: {
-    marginTop: -56,
-    paddingTop: 56,
-  },
+  safe: { flex: 1, backgroundColor: '#FCFAF7' },
+  webSafe: { marginTop: -56, paddingTop: 56 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: 26,
+    paddingTop: 12,
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  headerTitle: { fontSize: 13, color: '#5C625D' },
+  iconButton: { width: 32, height: 36, alignItems: 'center', justifyContent: 'center' },
+  scroll: { flex: 1 },
   content: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingTop: 58,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 28,
   },
   title: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '600',
-    color: '#111111',
-    textAlign: 'center',
+    fontSize: 25,
+    lineHeight: 31,
+    fontWeight: '700',
+    color: '#262B28',
   },
   subtitle: {
-    marginTop: 12,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#333333',
-    textAlign: 'center',
+    marginTop: 13,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#747974',
   },
   summaryBox: {
-    width: '100%',
-    marginTop: 38,
-    paddingHorizontal: 20,
-    paddingVertical: 22,
+    marginTop: 20,
+    minHeight: 154,
+    paddingHorizontal: 15,
+    paddingVertical: 23,
     borderWidth: 1,
-    borderColor: '#A9AD70',
-    borderRadius: 28,
-    backgroundColor: '#E8E9D9',
-    alignItems: 'center',
+    borderColor: '#E5DDD3',
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
   },
   summary: {
     fontSize: 21,
-    lineHeight: 27,
-    color: '#111111',
-    textAlign: 'center',
+    lineHeight: 26,
+    fontWeight: '500',
+    color: '#252925',
   },
+  summaryCaption: { marginTop: 15, fontSize: 11, color: '#737A74' },
+  sectionTitle: { marginTop: 27, fontSize: 12, color: '#363C36' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 13 },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 15, backgroundColor: '#EAF4F1' },
+  chipText: { fontSize: 11, color: '#24443A' },
+  mappingsBox: {
+    marginTop: 21,
+    paddingHorizontal: 14,
+    paddingVertical: 20,
+    borderWidth: 1,
+    borderColor: '#E5DDD3',
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    gap: 17,
+  },
+  mappingRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  phrase: { flex: 1, fontSize: 12, lineHeight: 17, color: '#252925' },
+  mappingResult: { flex: 1, fontSize: 12, lineHeight: 17, color: '#24443A' },
   actions: {
-    width: '100%',
-    marginTop: 88,
+    paddingHorizontal: 28,
+    paddingTop: 9,
     paddingBottom: 24,
-    gap: 10,
+    gap: 9,
+    backgroundColor: '#FCFAF7',
   },
   actionButton: {
-    width: '100%',
-    minHeight: 72,
+    minHeight: 47,
     borderWidth: 1,
-    borderColor: '#A9AD70',
-    borderRadius: 28,
+    borderColor: '#E5DDD3',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F9F7F2',
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
   },
-  actionText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111111',
-  },
+  actionText: { fontSize: 13, fontWeight: '600', color: '#262B28' },
+  primaryButton: { borderColor: '#24443A', backgroundColor: '#24443A' },
+  primaryText: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
+  disabledButton: { opacity: 0.55 },
 });

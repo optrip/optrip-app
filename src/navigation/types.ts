@@ -48,6 +48,7 @@ export type OnboardingStackParamList = {
   CorePlaces: undefined;
   PlaceDetail: { contentId: string };
   PlaceSelection: undefined;
+  SelectionReview: undefined;
   CoursePreview: undefined;
   CourseList: undefined;
   CourseDetail: { courseIndex: number; savedCourse?: Course; savedRegionName?: string };

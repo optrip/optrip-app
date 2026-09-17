@@ -3,10 +3,19 @@ export type RegionSource = 'user' | 'ai';
 export type RegionCandidate = {
   name: string;
   reasons: string[];
+  reasonsDetail?: { title: string; description: string }[];
+  matchedPurposes?: number;
+  totalPurposes?: number;
+  candidateCount?: number;
   source: RegionSource;
   lDongRegnCd: string;
   lDongSignguCd: string;
   imageUrl: string | null;
+  travelFromOrigin?: {
+    mode: string;
+    durationMinutes: number;
+    summary: string;
+  } | null;
 };
 
 export type RegionsResponse = {

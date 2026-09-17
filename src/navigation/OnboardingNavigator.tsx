@@ -22,6 +22,7 @@ import { RegionDetailScreen } from '../screens/planning/RegionDetailScreen';
 import { CorePlacesScreen } from '../screens/planning/CorePlacesScreen';
 import { PlaceDetailScreen } from '../screens/planning/PlaceDetailScreen';
 import { PlaceSelectionScreen } from '../screens/planning/PlaceSelectionScreen';
+import { SelectionReviewScreen } from '../screens/planning/SelectionReviewScreen';
 import { CoursePreviewScreen } from '../screens/planning/CoursePreviewScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
@@ -145,6 +146,7 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         component={CoursePreviewScreen}
         options={{ animation: 'slide_from_right' }}
       />
+      <Stack.Screen name="SelectionReview" component={SelectionReviewScreen} />
       <Stack.Screen
         name="CourseList"
         component={CourseListScreen}

@@ -5,6 +5,7 @@ import type { PlaceRecommendationsResponse } from '../api/places';
 import type { RegionCandidate } from '../api/regions';
 import type { InterpretResult } from '../api/interpret';
 import type { Companion, Preference, TransportMode } from '../navigation/types';
+import { getPlanningDays, reconcilePlaceDays } from './placeSchedule';
 
 export type DateRange = {
   start: string | null;
@@ -23,6 +24,7 @@ export type PlanningState = {
   selectedRegion: RegionCandidate | null;
   placeRecommendations: PlaceRecommendationsResponse | null;
   selectedPlaceIds: string[];
+  selectedPlaceDays: string[][];
   courses: CourseListResponse | null; // 선택 지역의 코스들 (Image #2, #3)
   excludeRegions: string[]; // 다시 받기 시 제외할, 이미 본 지역명
   error: string | null;
@@ -42,6 +44,7 @@ type PlanningContextValue = {
   setSelectedRegion: (region: RegionCandidate | null) => void;
   setPlaceRecommendations: (places: PlaceRecommendationsResponse | null) => void;
   setSelectedPlaceIds: (contentIds: string[]) => void;
+  setSelectedPlaceDays: (days: string[][]) => void;
   setCourses: (c: CourseListResponse | null) => void;
   pushExcludedRegion: (name: string) => void;
   setError: (e: string | null) => void;
@@ -60,6 +63,7 @@ const initial: PlanningState = {
   selectedRegion: null,
   placeRecommendations: null,
   selectedPlaceIds: [],
+  selectedPlaceDays: [],
   courses: null,
   excludeRegions: [],
   error: null,
@@ -102,14 +106,31 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
           selectedRegion,
           placeRecommendations: null,
           selectedPlaceIds: [],
+          selectedPlaceDays: [],
         })),
       setPlaceRecommendations: (placeRecommendations) =>
         setPlan((p) => ({
           ...p,
           placeRecommendations,
-          selectedPlaceIds: placeRecommendations?.core.map((place) => place.contentId) ?? [],
+          selectedPlaceIds: [],
+          selectedPlaceDays: [],
         })),
-      setSelectedPlaceIds: (selectedPlaceIds) => setPlan((p) => ({ ...p, selectedPlaceIds })),
+      setSelectedPlaceIds: (selectedPlaceIds) =>
+        setPlan((p) => ({
+          ...p,
+          selectedPlaceIds: [...new Set(selectedPlaceIds)],
+          selectedPlaceDays: reconcilePlaceDays(
+            selectedPlaceIds,
+            getPlanningDays(p.dateRange, p.noSpecificDate),
+            p.selectedPlaceDays,
+          ),
+        })),
+      setSelectedPlaceDays: (selectedPlaceDays) =>
+        setPlan((p) => ({
+          ...p,
+          selectedPlaceDays,
+          selectedPlaceIds: selectedPlaceDays.flat(),
+        })),
       setCourses: (courses) => setPlan((p) => ({ ...p, courses })),
       pushExcludedRegion: (name) =>
         setPlan((p) =>

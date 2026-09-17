@@ -5,7 +5,12 @@ export type InterpretRequest = {
   destinations: string[];
 };
 
-export type InterpretResult = { purposes: string[]; summary: string };
+export type PhraseMapping = { phrase: string; purposes: string[] };
+export type InterpretResult = {
+  purposes: string[];
+  summary: string;
+  mappings?: PhraseMapping[];
+};
 const BASE_URL = 'https://optrip-server.fly.dev';
 
 export async function interpretTravel(request: InterpretRequest): Promise<InterpretResult> {
