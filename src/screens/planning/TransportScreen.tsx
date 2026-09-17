@@ -21,7 +21,7 @@ export function TransportScreen() {
   const navigation = useNavigation<Nav>();
   const { plan, setTransport } = usePlanning();
 
-  const next = () => navigation.navigate('Loading');
+  const next = () => navigation.navigate('InterpretationReview');
   const enabled = plan.transport !== null;
 
   return (

@@ -1,4 +1,5 @@
 import type { Course } from '../api/recommend';
+import type { RegionCandidate } from '../api/regions';
 
 export type Gender = 'female' | 'male';
 
@@ -39,8 +40,16 @@ export type OnboardingStackParamList = {
   Companion: undefined;
   Preference: undefined;
   Transport: undefined;
-  Loading: undefined;
-  Recommendation: undefined;
+  InterpretationReview: undefined;
+  PreferenceCorrection: undefined;
+  RegionCandidatesPlaceholder: undefined;
+  RegionCandidates: undefined;
+  RegionDetail: { region: RegionCandidate };
+  CorePlaces: undefined;
+  PlaceDetail: { contentId: string };
+  PlaceSelection: undefined;
+  SelectionReview: undefined;
+  CoursePreview: undefined;
   CourseList: undefined;
   CourseDetail: { courseIndex: number; savedCourse?: Course; savedRegionName?: string };
   MyPage: undefined;

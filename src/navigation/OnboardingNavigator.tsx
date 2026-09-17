@@ -14,13 +14,20 @@ import { ScheduleScreen } from '../screens/planning/ScheduleScreen';
 import { CompanionScreen } from '../screens/planning/CompanionScreen';
 import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
 import { TransportScreen } from '../screens/planning/TransportScreen';
-import { LoadingScreen } from '../screens/planning/LoadingScreen';
-import { RecommendationScreen } from '../screens/planning/RecommendationScreen';
+import { InterpretationReviewScreen } from '../screens/planning/InterpretationReviewScreen';
+import { PreferenceCorrectionScreen } from '../screens/planning/PreferenceCorrectionScreen';
+import { RegionCandidatesPlaceholderScreen } from '../screens/planning/RegionCandidatesPlaceholderScreen';
+import { RegionCandidatesScreen } from '../screens/planning/RegionCandidatesScreen';
+import { RegionDetailScreen } from '../screens/planning/RegionDetailScreen';
+import { CorePlacesScreen } from '../screens/planning/CorePlacesScreen';
+import { PlaceDetailScreen } from '../screens/planning/PlaceDetailScreen';
+import { PlaceSelectionScreen } from '../screens/planning/PlaceSelectionScreen';
+import { SelectionReviewScreen } from '../screens/planning/SelectionReviewScreen';
+import { CoursePreviewScreen } from '../screens/planning/CoursePreviewScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
 import MyPageScreen from '../screens/MyPageScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-
 
 import type { OnboardingStackParamList } from './types';
 
@@ -94,12 +101,52 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         component={TransportScreen}
         options={{ animation: 'slide_from_right' }}
       />
-      <Stack.Screen name="Loading" component={LoadingScreen} options={{ animation: 'fade' }} />
       <Stack.Screen
-        name="Recommendation"
-        component={RecommendationScreen}
+        name="InterpretationReview"
+        component={InterpretationReviewScreen}
         options={{ animation: 'fade' }}
       />
+      <Stack.Screen
+        name="PreferenceCorrection"
+        component={PreferenceCorrectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionCandidatesPlaceholder"
+        component={RegionCandidatesPlaceholderScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionCandidates"
+        component={RegionCandidatesScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="RegionDetail"
+        component={RegionDetailScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="CorePlaces"
+        component={CorePlacesScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="PlaceDetail"
+        component={PlaceDetailScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="PlaceSelection"
+        component={PlaceSelectionScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="CoursePreview"
+        component={CoursePreviewScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen name="SelectionReview" component={SelectionReviewScreen} />
       <Stack.Screen
         name="CourseList"
         component={CourseListScreen}

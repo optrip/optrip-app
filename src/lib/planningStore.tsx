@@ -1,7 +1,11 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import type { CourseListResponse, RegionResponse } from '../api/recommend';
+import type { PlaceRecommendationsResponse } from '../api/places';
+import type { RegionCandidate } from '../api/regions';
+import type { InterpretResult } from '../api/interpret';
 import type { Companion, Preference, TransportMode } from '../navigation/types';
+import { getPlanningDays, reconcilePlaceDays } from './placeSchedule';
 
 export type DateRange = {
   start: string | null;
@@ -15,7 +19,12 @@ export type PlanningState = {
   companion: Companion | null;
   preferences: Preference[];
   transport: TransportMode | null;
+  interpretation: InterpretResult | null;
   result: RegionResponse | null; // 현재 추천된 지역 (Image #1)
+  selectedRegion: RegionCandidate | null;
+  placeRecommendations: PlaceRecommendationsResponse | null;
+  selectedPlaceIds: string[];
+  selectedPlaceDays: string[][];
   courses: CourseListResponse | null; // 선택 지역의 코스들 (Image #2, #3)
   excludeRegions: string[]; // 다시 받기 시 제외할, 이미 본 지역명
   error: string | null;
@@ -28,8 +37,14 @@ type PlanningContextValue = {
   setNoSpecificDate: (v: boolean) => void;
   setCompanion: (c: Companion) => void;
   togglePreference: (p: Preference) => void;
+  setPreferences: (preferences: Preference[]) => void;
   setTransport: (t: TransportMode) => void;
+  setInterpretation: (result: InterpretResult | null) => void;
   setResult: (r: RegionResponse | null) => void;
+  setSelectedRegion: (region: RegionCandidate | null) => void;
+  setPlaceRecommendations: (places: PlaceRecommendationsResponse | null) => void;
+  setSelectedPlaceIds: (contentIds: string[]) => void;
+  setSelectedPlaceDays: (days: string[][]) => void;
   setCourses: (c: CourseListResponse | null) => void;
   pushExcludedRegion: (name: string) => void;
   setError: (e: string | null) => void;
@@ -43,7 +58,12 @@ const initial: PlanningState = {
   companion: null,
   preferences: [],
   transport: null,
+  interpretation: null,
   result: null,
+  selectedRegion: null,
+  placeRecommendations: null,
+  selectedPlaceIds: [],
+  selectedPlaceDays: [],
   courses: null,
   excludeRegions: [],
   error: null,
@@ -75,9 +95,42 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
           if (p.preferences.length >= 5) return p;
           return { ...p, preferences: [...p.preferences, pref] };
         }),
+      setPreferences: (preferences) => setPlan((p) => ({ ...p, preferences })),
       setTransport: (transport) => setPlan((p) => ({ ...p, transport })),
+      setInterpretation: (interpretation) => setPlan((p) => ({ ...p, interpretation })),
       // 새 지역을 받으면 이전에 보던 코스는 무효화
       setResult: (result) => setPlan((p) => ({ ...p, result, courses: null, error: null })),
+      setSelectedRegion: (selectedRegion) =>
+        setPlan((p) => ({
+          ...p,
+          selectedRegion,
+          placeRecommendations: null,
+          selectedPlaceIds: [],
+          selectedPlaceDays: [],
+        })),
+      setPlaceRecommendations: (placeRecommendations) =>
+        setPlan((p) => ({
+          ...p,
+          placeRecommendations,
+          selectedPlaceIds: [],
+          selectedPlaceDays: [],
+        })),
+      setSelectedPlaceIds: (selectedPlaceIds) =>
+        setPlan((p) => ({
+          ...p,
+          selectedPlaceIds: [...new Set(selectedPlaceIds)],
+          selectedPlaceDays: reconcilePlaceDays(
+            selectedPlaceIds,
+            getPlanningDays(p.dateRange, p.noSpecificDate),
+            p.selectedPlaceDays,
+          ),
+        })),
+      setSelectedPlaceDays: (selectedPlaceDays) =>
+        setPlan((p) => ({
+          ...p,
+          selectedPlaceDays,
+          selectedPlaceIds: selectedPlaceDays.flat(),
+        })),
       setCourses: (courses) => setPlan((p) => ({ ...p, courses })),
       pushExcludedRegion: (name) =>
         setPlan((p) =>

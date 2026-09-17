@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# Keep this template in Git without storing real keys
+!.env.example
 
 # typescript
 *.tsbuildinfo
