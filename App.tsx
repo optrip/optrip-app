@@ -18,7 +18,7 @@ function Root() {
 
   return (
     <NavigationContainer>
-      <OnboardingNavigator initialRouteName={onboarded ? 'Home' : 'Welcome'} />
+      <OnboardingNavigator initialRouteName={onboarded ? 'Home' : 'FirstLogoScreen'} />
       <StatusBar style="auto" />
     </NavigationContainer>
   );

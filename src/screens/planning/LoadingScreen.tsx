@@ -14,7 +14,6 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'Loading'>;
 const LOGO = require('../../../assets/logo/optrip-large.png');
 
 // 실제 추천 응답이 약 11~15초 걸려, progress bar 가 10초에 걸쳐 차도록 설정.
-// (응답이 더 걸리면 바가 가득 찬 상태로 완료까지 대기)
 const MIN_DISPLAY_MS = 10000;
 
 export function LoadingScreen() {
@@ -25,7 +24,6 @@ export function LoadingScreen() {
 
   useEffect(() => {
     const body = buildRecommendRequest(plan);
-
     const startedAt = Date.now();
 
     Animated.timing(progress, {
@@ -72,8 +70,13 @@ export function LoadingScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>맞춤 여행지를 찾고 있어요</Text>
+      {/* 안내 타이틀 */}
+      <Text style={styles.title}>잠시만 기다려주세요</Text>
+
+      {/* 심볼 로고 */}
       <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+
+      {/* 프로그레스 바 트랙 & 애니메이션 바 */}
       <View style={styles.track}>
         <Animated.View style={[styles.fill, { width: fillWidth }]} />
       </View>
@@ -84,32 +87,34 @@ export function LoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.background || '#F9F8F4',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.screenPaddingX,
+    paddingHorizontal: spacing.screenPaddingX || 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '500',
-    color: colors.textPrimary,
-    marginBottom: spacing.xl,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary || '#1A1A1A',
+    marginBottom: 16,
   },
   logo: {
-    width: 220,
-    height: 84,
-    marginBottom: spacing.xl,
+    width: 200,
+    height: 72,
+    marginBottom: 36,
   },
   track: {
-    width: 240,
-    height: 4,
+    width: 260,
+    height: 3,
     borderRadius: 2,
-    backgroundColor: colors.progressTrack,
+    backgroundColor: '#E5E3D7',
     overflow: 'hidden',
   },
   fill: {
-    height: 4,
-    backgroundColor: colors.progressFill,
+    height: 3,
+    backgroundColor: '#8F9A68',
     borderRadius: 2,
   },
 });
+
+export default LoadingScreen;

@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, ScrollView, ImageBackground, SafeAreaView, Imag
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../lib/onboardingStore';
+import { colors, spacing } from '../lib/theme';
 
 const LOGO = require('../../assets/logo/optrip-small.png');
 
 export const MyTripsScreen = () => {
   const navigation = useNavigation<any>();
-  const { savedTrips } = useOnboarding(); // 실제 데이터 가져오기
+  const { savedTrips } = useOnboarding();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -20,7 +21,7 @@ export const MyTripsScreen = () => {
         <Text style={styles.titleText}>내가 저장한 여행</Text>
 
         {savedTrips.length === 0 ? (
-          <Text style={{ textAlign: 'center', marginTop: 50, color: '#999' }}>아직 저장한 여행이 없어요.</Text>
+          <Text style={styles.emptyText}>아직 저장한 여행이 없어요.</Text>
         ) : (
           savedTrips.map((trip) => (
             <TouchableOpacity
@@ -38,7 +39,7 @@ export const MyTripsScreen = () => {
               <ImageBackground
                 source={{ uri: trip.image }}
                 style={styles.cardBackground}
-                imageStyle={{ borderRadius: 25, opacity: 0.8 }}
+                imageStyle={{ borderRadius: 20, opacity: 0.85 }}
               >
                 <Text style={styles.tripTitle}>{trip.title}</Text>
                 <Text style={styles.tripDesc}>{trip.desc}</Text>
@@ -51,13 +52,13 @@ export const MyTripsScreen = () => {
 
       <View style={styles.bottomBar}>
         <View>
-          <Ionicons name="briefcase" size={28} color="#3B82F6" />
+          <Ionicons name="briefcase" size={28} color={colors.actionPrimary} />
         </View>
         <TouchableOpacity style={styles.mainMarker} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="location-outline" size={35} color="#ccc" />
+          <Ionicons name="location-outline" size={35} color={colors.textSecondary} />
         </TouchableOpacity>
         <View>
-          <Ionicons name="person-outline" size={28} color="#ccc" />
+          <Ionicons name="person-outline" size={28} color={colors.textSecondary} />
         </View>
       </View>
     </SafeAreaView>
@@ -65,15 +66,16 @@ export const MyTripsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  header: { paddingHorizontal: 20, paddingTop: 60 },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  header: { paddingHorizontal: spacing.screenPaddingX, paddingTop: 60 },
   logoImage: { width: 78, height: 30 },
-  content: { flex: 1, paddingHorizontal: 25 },
-  titleText: { fontSize: 26, fontWeight: 'bold', marginTop: 30, marginBottom: 20 },
-  card: { height: 180, marginBottom: 20, borderRadius: 25, backgroundColor: '#eee', overflow: 'hidden' },
+  content: { flex: 1, paddingHorizontal: spacing.screenPaddingX },
+  titleText: { fontSize: 26, fontWeight: 'bold', marginTop: 30, marginBottom: 20, color: colors.textPrimary },
+  emptyText: { textAlign: 'center', marginTop: 50, color: colors.textSecondary },
+  card: { height: 180, marginBottom: 20, borderRadius: 20, backgroundColor: colors.cardDefault, borderWidth: 1, borderColor: colors.divider, overflow: 'hidden' },
   cardBackground: { flex: 1, padding: 25, justifyContent: 'space-between' },
-  tripTitle: { fontSize: 20, fontWeight: 'bold', color: '#000' },
-  tripDesc: { fontSize: 14, color: '#000', marginTop: 5, fontWeight: '600' },
+  tripTitle: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary },
+  tripDesc: { fontSize: 14, color: colors.textPrimary, marginTop: 5, fontWeight: '600' },
   
   bottomBar: {
     height: 80,
@@ -81,14 +83,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: colors.divider,
     paddingBottom: 20,
+    backgroundColor: colors.cardDefault,
   },
   mainMarker: {
     marginTop: -40,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardDefault,
     borderRadius: 50,
     padding: 12,
+    borderWidth: 1,
+    borderColor: colors.divider,
     elevation: 5,
   },
 });
