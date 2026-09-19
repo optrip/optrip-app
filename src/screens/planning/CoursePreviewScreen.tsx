@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +31,14 @@ import type { OnboardingStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CoursePreview'>;
 type Transport = ItineraryRequest['transport'];
 function formatLegSummary(leg: ItineraryLeg) {
+  const transitSteps = (leg.steps ?? []).filter((step) => ['버스', '지하철'].includes(step.mode));
+  if (transitSteps.length) {
+    const route = transitSteps
+      .map((step) => `${step.mode}${step.lineName ? ` ${step.lineName}` : ''}`)
+      .join(' → ');
+    const transfers = transitSteps.length - 1;
+    return `${route}${transfers ? ` · ${transfers}회 환승` : ''} · 총 ${Math.max(1, Math.round(leg.durationMinutes))}분`;
+  }
   const minutes = Math.max(1, Math.round(leg.durationMinutes));
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
@@ -31,6 +48,21 @@ function formatLegSummary(leg: ItineraryLeg) {
     .replace(/\s*·\s*$/, '')
     .trim();
   return `${transport || leg.mode} · ${duration}`;
+}
+
+function formatLegBreakdown(leg: ItineraryLeg) {
+  const steps = leg.steps ?? [];
+  if (!steps.length || leg.mode === '자동차') return null;
+  const walk = steps
+    .filter((step) => step.mode === '도보')
+    .reduce((sum, step) => sum + step.durationMinutes, 0);
+  const transit = steps
+    .filter((step) => step.mode === '버스' || step.mode === '지하철')
+    .reduce((sum, step) => sum + step.durationMinutes, 0);
+  const parts = [];
+  if (transit) parts.push(`대중교통 ${transit}분`);
+  if (walk) parts.push(`도보 ${walk}분`);
+  return parts.join(' · ') || null;
 }
 export function CoursePreviewScreen() {
   const navigation = useNavigation<Nav>();
@@ -48,6 +80,11 @@ export function CoursePreviewScreen() {
   const [transport, setTransport] = useState<Transport>('대중교통');
   const [transportOpen, setTransportOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState<{ points: RoutePoint[]; key: number } | null>(null);
+  const [detailLeg, setDetailLeg] = useState<{
+    leg: ItineraryLeg;
+    from: string;
+    to: string;
+  } | null>(null);
   const itineraryCache = useRef(new Map<string, ItineraryResponse>());
   const scheduledDays = useMemo(
     () => reconcilePlaceDays(plan.selectedPlaceIds, dayCount, plan.selectedPlaceDays),
@@ -349,34 +386,57 @@ export function CoursePreviewScreen() {
                   </Pressable>
                 </View>
                 {index < places.length - 1 && (
-                  <Pressable
-                    style={styles.leg}
-                    onPress={() => {
-                      const next = places[index + 1];
-                      const points = leg?.encodedPolyline
-                        ? decodeGooglePolyline(leg.encodedPolyline)
-                        : [
-                            { lat: Number(place.mapy), lng: Number(place.mapx) },
-                            { lat: Number(next.mapy), lng: Number(next.mapx) },
-                          ];
-                      setMapFocus({ points, key: Date.now() });
-                    }}
-                    accessibilityLabel={`${index + 1}번과 ${index + 2}번 사이 이동 경로 지도에서 보기`}
-                  >
-                    <Text style={styles.legText}>
-                      {leg
-                        ? formatLegSummary(leg)
-                        : loading
-                          ? '이동 시간 확인 중...'
-                          : '이동 정보 없음'}
-                    </Text>
+                  <View style={styles.leg}>
+                    <Pressable
+                      style={styles.legMapButton}
+                      onPress={() => {
+                        const next = places[index + 1];
+                        const points = leg?.encodedPolyline
+                          ? decodeGooglePolyline(leg.encodedPolyline)
+                          : [
+                              { lat: Number(place.mapy), lng: Number(place.mapx) },
+                              { lat: Number(next.mapy), lng: Number(next.mapx) },
+                            ];
+                        setMapFocus({ points, key: Date.now() });
+                      }}
+                      accessibilityLabel={`${index + 1}번과 ${index + 2}번 사이 이동 경로 지도에서 보기`}
+                    >
+                      <View style={styles.legSummary}>
+                        <Text style={styles.legText}>
+                          {leg
+                            ? formatLegSummary(leg)
+                            : loading
+                              ? '이동 시간 확인 중...'
+                              : '이동 정보 없음'}
+                        </Text>
+                        {leg && formatLegBreakdown(leg) && (
+                          <Text style={styles.legBreakdown}>{formatLegBreakdown(leg)}</Text>
+                        )}
+                      </View>
+                      {leg && (
+                        <Text style={styles.distance}>
+                          {(leg.distanceMeters / 1000).toFixed(1)}km
+                        </Text>
+                      )}
+                      <Ionicons name="expand-outline" size={13} color="#998354" />
+                    </Pressable>
                     {leg && (
-                      <Text style={styles.distance}>
-                        {(leg.distanceMeters / 1000).toFixed(1)}km
-                      </Text>
+                      <Pressable
+                        style={styles.legDetailButton}
+                        onPress={() =>
+                          setDetailLeg({
+                            leg,
+                            from: getPlaceDisplayTitle(place.title, regionName),
+                            to: getPlaceDisplayTitle(places[index + 1].title, regionName),
+                          })
+                        }
+                        accessibilityLabel={`${index + 1}번과 ${index + 2}번 사이 이동 상세보기`}
+                      >
+                        <Text style={styles.legDetailText}>자세히</Text>
+                        <Ionicons name="chevron-forward" size={12} color="#77766F" />
+                      </Pressable>
                     )}
-                    <Ionicons name="expand-outline" size={13} color="#998354" />
-                  </Pressable>
+                  </View>
                 )}
               </View>
             );
@@ -395,6 +455,67 @@ export function CoursePreviewScreen() {
           <Text style={styles.saveText}>{saved ? '저장됨 ✓' : '저장하기'}</Text>
         </Pressable>
       </View>
+      <Modal
+        visible={detailLeg !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDetailLeg(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setDetailLeg(null)}>
+          <Pressable style={styles.modalSheet} onPress={() => undefined}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleBody}>
+                <Text style={styles.modalTitle}>이동 상세</Text>
+                <Text style={styles.modalRoute} numberOfLines={1}>
+                  {detailLeg?.from} → {detailLeg?.to}
+                </Text>
+              </View>
+              <Pressable onPress={() => setDetailLeg(null)} hitSlop={10}>
+                <Ionicons name="close" size={23} color="#252725" />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.stepList} showsVerticalScrollIndicator={false}>
+              {(detailLeg?.leg.steps?.length
+                ? detailLeg.leg.steps
+                : [
+                    {
+                      mode: detailLeg?.leg.mode ?? '이동',
+                      durationMinutes: detailLeg?.leg.durationMinutes ?? 0,
+                      distanceMeters: detailLeg?.leg.distanceMeters ?? 0,
+                    },
+                  ]
+              ).map((step, index) => (
+                <View key={`${step.mode}-${index}`} style={styles.stepRow}>
+                  <View style={styles.stepNumber}>
+                    <Text style={styles.stepNumberText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.stepBody}>
+                    <Text style={styles.stepTitle}>
+                      {step.mode}
+                      {step.lineName ? ` ${step.lineName}` : ''} · {step.durationMinutes}분
+                    </Text>
+                    {step.departureStop && step.arrivalStop ? (
+                      <Text style={styles.stepDescription}>
+                        {step.departureStop} → {step.arrivalStop}
+                        {step.stopCount ? ` · ${step.stopCount}개 정류장` : ''}
+                      </Text>
+                    ) : step.mode === '도보' ? (
+                      <Text style={styles.stepDescription}>
+                        도보 이동 · {(step.distanceMeters / 1000).toFixed(1)}km
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.modalTotal}>
+              <Text style={styles.modalTotalLabel}>총 이동시간</Text>
+              <Text style={styles.modalTotalValue}>{detailLeg?.leg.durationMinutes}분</Text>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -517,11 +638,17 @@ const styles = StyleSheet.create({
   purpose: { fontSize: 11, color: '#77766F', marginTop: 4 },
   leg: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 9,
     paddingVertical: 9,
   },
+  legMapButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
+  },
+  legSummary: { flexShrink: 1, alignItems: 'center' },
   legText: {
     flexShrink: 1,
     textAlign: 'center',
@@ -530,7 +657,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: '#998354',
   },
+  legBreakdown: { marginTop: 1, fontSize: 9, lineHeight: 13, color: '#77766F' },
   distance: { fontSize: 10, color: '#77766F' },
+  legDetailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingVertical: 6,
+    borderLeftWidth: 1,
+    borderLeftColor: '#E4DDD5',
+  },
+  legDetailText: { fontSize: 10, color: '#77766F' },
   status: { fontSize: 12, lineHeight: 18, color: '#77766F', paddingVertical: 12 },
   retry: { fontSize: 12, color: '#24443A', paddingBottom: 10 },
   footer: {
@@ -561,4 +698,54 @@ const styles = StyleSheet.create({
   },
   saveText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   disabled: { opacity: 0.45 },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.28)',
+  },
+  modalSheet: {
+    maxHeight: '75%',
+    paddingHorizontal: 24,
+    paddingTop: 9,
+    paddingBottom: 28,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: '#FCFAF7',
+  },
+  modalHandle: {
+    alignSelf: 'center',
+    width: 38,
+    height: 4,
+    marginBottom: 17,
+    borderRadius: 2,
+    backgroundColor: '#D4D0C8',
+  },
+  modalHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 19 },
+  modalTitleBody: { flex: 1 },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#252725' },
+  modalRoute: { marginTop: 5, fontSize: 12, color: '#77766F' },
+  stepList: { flexGrow: 0 },
+  stepRow: { flexDirection: 'row', gap: 12, paddingBottom: 18 },
+  stepNumber: {
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#24443A',
+  },
+  stepNumberText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  stepBody: { flex: 1, paddingTop: 2 },
+  stepTitle: { fontSize: 14, fontWeight: '700', color: '#252725' },
+  stepDescription: { marginTop: 5, fontSize: 11, lineHeight: 17, color: '#77766F' },
+  modalTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 5,
+    paddingTop: 17,
+    borderTopWidth: 1,
+    borderTopColor: '#E4DDD5',
+  },
+  modalTotalLabel: { fontSize: 13, color: '#77766F' },
+  modalTotalValue: { fontSize: 14, fontWeight: '700', color: '#24443A' },
 });

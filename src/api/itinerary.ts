@@ -13,6 +13,17 @@ export type ItineraryLeg = {
   durationMinutes: number;
   distanceMeters: number;
   encodedPolyline?: string;
+  steps?: ItineraryRouteStep[];
+};
+
+export type ItineraryRouteStep = {
+  mode: '도보' | '버스' | '지하철' | '자동차' | string;
+  durationMinutes: number;
+  distanceMeters: number;
+  lineName?: string;
+  departureStop?: string;
+  arrivalStop?: string;
+  stopCount?: number;
 };
 
 export type ItineraryItem = {
