@@ -10,6 +10,7 @@ import {
   createScheduledItinerary,
   type ItineraryResponse,
   type ItineraryLeg,
+  type ItineraryRequest,
 } from '../../api/itinerary';
 import { decodeGooglePolyline } from '../../api/routes';
 import { useOnboarding } from '../../lib/onboardingStore';
@@ -18,6 +19,7 @@ import { getPlanningDays, reconcilePlaceDays } from '../../lib/placeSchedule';
 import type { OnboardingStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CoursePreview'>;
+type Transport = ItineraryRequest['transport'];
 function formatLegSummary(leg: ItineraryLeg) {
   const minutes = Math.max(1, Math.round(leg.durationMinutes));
   const hours = Math.floor(minutes / 60);
@@ -42,6 +44,8 @@ export function CoursePreviewScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [transport, setTransport] = useState<Transport>('대중교통');
+  const [transportOpen, setTransportOpen] = useState(false);
   const scheduledDays = useMemo(
     () => reconcilePlaceDays(plan.selectedPlaceIds, dayCount, plan.selectedPlaceDays),
     [plan.selectedPlaceIds, dayCount, plan.selectedPlaceDays],
@@ -112,7 +116,7 @@ export function CoursePreviewScreen() {
     setError(null);
     setItinerary(null);
     setSaved(false);
-    createScheduledItinerary(scheduledDays, '대중교통')
+    createScheduledItinerary(scheduledDays, transport)
       .then((result) => {
         if (active) setItinerary(result);
       })
@@ -126,13 +130,13 @@ export function CoursePreviewScreen() {
     return () => {
       active = false;
     };
-  }, [scheduledDays, retry]);
+  }, [scheduledDays, transport, retry]);
   const save = () => {
     if (!itinerary || saved) return;
     const title = `${regionName} · ${duration}`;
     saveTrip({
       title,
-      desc: `${plan.selectedPlaceIds.length}곳 · 대중교통`,
+      desc: `${plan.selectedPlaceIds.length}곳 · ${transport}`,
       image: allPlaces.find((p) => p.imageUrl)?.imageUrl ?? '',
       regionName,
       course: {
@@ -189,9 +193,51 @@ export function CoursePreviewScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>
-          {regionName} · {duration}
-        </Text>
+        <View style={styles.titleRow}>
+          <View>
+            <Text style={styles.title}>{regionName}</Text>
+            <Text style={styles.duration}>{duration}</Text>
+          </View>
+          <View style={styles.transportWrap}>
+            <Pressable
+              style={styles.transportButton}
+              onPress={() => setTransportOpen((open) => !open)}
+              accessibilityRole="button"
+              accessibilityLabel={`이동수단 선택, 현재 ${transport}`}
+            >
+              <Text style={styles.transportButtonText}>{transport}</Text>
+              <Ionicons
+                name={transportOpen ? 'chevron-up' : 'chevron-down'}
+                size={13}
+                color="#77766F"
+              />
+            </Pressable>
+            {transportOpen && (
+              <View style={styles.transportMenu}>
+                {(['대중교통', '자동차'] as Transport[]).map((option) => (
+                  <Pressable
+                    key={option}
+                    style={styles.transportOption}
+                    onPress={() => {
+                      setTransport(option);
+                      setTransportOpen(false);
+                    }}
+                    accessibilityRole="menuitem"
+                  >
+                    <Text
+                      style={[
+                        styles.transportOptionText,
+                        transport === option && styles.activeTransportText,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -220,7 +266,7 @@ export function CoursePreviewScreen() {
           routePaths={routePaths}
           connectionPaths={connectionPaths}
         />
-        {loading && <Text style={styles.status}>대중교통 경로를 확인하고 있어요.</Text>}
+        {loading && <Text style={styles.status}>{transport} 경로를 확인하고 있어요.</Text>}
         {error && (
           <View>
             <Text style={styles.status}>{error}</Text>
@@ -307,7 +353,50 @@ const styles = StyleSheet.create({
   headerText: { flex: 1, fontSize: 12, color: '#77766F' },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 28, paddingBottom: 20 },
-  title: { fontSize: 25, lineHeight: 34, fontWeight: '700', color: '#252725', marginBottom: 19 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    minHeight: 58,
+    marginBottom: 12,
+    zIndex: 10,
+  },
+  title: { fontSize: 25, lineHeight: 32, fontWeight: '700', color: '#252725' },
+  duration: { marginTop: 1, fontSize: 11, color: '#77766F' },
+  transportWrap: { alignItems: 'flex-end', position: 'relative', zIndex: 20 },
+  transportButton: {
+    minWidth: 98,
+    minHeight: 34,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EEE9E1',
+  },
+  transportButtonText: { fontSize: 11, color: '#77766F' },
+  transportMenu: {
+    position: 'absolute',
+    top: 36,
+    right: 0,
+    width: 98,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EEE9E1',
+    shadowColor: '#000000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  transportOption: { paddingHorizontal: 11, paddingVertical: 8 },
+  transportOptionText: { fontSize: 11, color: '#77766F' },
+  activeTransportText: { color: '#C28A45', fontWeight: '700' },
   tabs: {
     backgroundColor: '#EFEEE7',
     borderWidth: 1,
