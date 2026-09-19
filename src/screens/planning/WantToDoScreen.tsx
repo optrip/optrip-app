@@ -8,8 +8,6 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -38,86 +36,87 @@ export function WantToDoScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          {/* 상단 헤더 */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.headerButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {/* 상단 헤더 */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.headerButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Home')}
-              style={styles.headerButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="home-outline" size={22} color="#1A1A1A" />
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Home')}
+            style={styles.headerButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="home-outline" size={22} color="#1A1A1A" />
+          </TouchableOpacity>
+        </View>
+
+        {/* 메인 콘텐츠 영역 */}
+        <View style={styles.content}>
+          {/* 타이틀 영역 */}
+          <View style={styles.titleSection}>
+            <Text style={styles.mainTitle}>이번 여행에서는{'\n'}어떤 하루를 보내고 싶나요?</Text>
+            <Text style={styles.subTitle}>
+              장소 이름이 아니라 원하는 느낌이나{'\n'}하고 싶은 일을 말해도 돼요.
+            </Text>
           </View>
 
-          {/* 메인 콘텐츠 영역 */}
-          <View style={styles.content}>
-            {/* 타이틀 영역 */}
-            <View style={styles.titleSection}>
-              <Text style={styles.mainTitle}>이번 여행에서는{'\n'}어떤 하루를 보내고 싶나요?</Text>
-              <Text style={styles.subTitle}>
-                장소 이름이 아니라 원하는 느낌이나{'\n'}하고 싶은 일을 말해도 돼요.
-              </Text>
-            </View>
+          {/* 텍스트 입력 카드 박스 */}
+          <TextInput
+            style={[
+              styles.inputCard,
+              styles.textInput,
+              content.length > 0 && styles.inputCardActive,
+            ]}
+            placeholder={'바다 보면서 천천히 걷고,\n맛있는 것도 많이 먹고 싶어요.'}
+            placeholderTextColor="#AAAAAA"
+            multiline
+            value={content}
+            onChangeText={setContent}
+            textAlignVertical="top"
+            accessibilityLabel="원하는 여행 내용 입력"
+          />
 
-            {/* 텍스트 입력 카드 박스 */}
-            <View style={[styles.inputCard, content.length > 0 && styles.inputCardActive]}>
-              <TextInput
-                style={styles.textInput}
-                placeholder={'바다 보면서 천천히 걷고,\n맛있는 것도 많이 먹고 싶어요.'}
-                placeholderTextColor="#AAAAAA"
-                multiline={true}
-                value={content}
-                onChangeText={setContent}
-                textAlignVertical="top"
-              />
-            </View>
-
-            {/* 추천 프리셋 버튼 영역 */}
-            <View style={styles.presetSection}>
-              <Text style={styles.presetTitle}>이렇게 시작해도 좋아요</Text>
-              <View style={styles.presetRow}>
-                {PRESETS.map((preset, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.presetButton, content === preset && styles.presetButtonSelected]}
-                    activeOpacity={0.8}
-                    onPress={() => handlePresetSelect(preset)}
+          {/* 추천 프리셋 버튼 영역 */}
+          <View style={styles.presetSection}>
+            <Text style={styles.presetTitle}>이렇게 시작해도 좋아요</Text>
+            <View style={styles.presetRow}>
+              {PRESETS.map((preset, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.presetButton, content === preset && styles.presetButtonSelected]}
+                  activeOpacity={0.8}
+                  onPress={() => handlePresetSelect(preset)}
+                >
+                  <Text
+                    style={[
+                      styles.presetButtonText,
+                      content === preset && styles.presetButtonTextSelected,
+                    ]}
                   >
-                    <Text
-                      style={[
-                        styles.presetButtonText,
-                        content === preset && styles.presetButtonTextSelected,
-                      ]}
-                    >
-                      {preset}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    {preset}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
+        </View>
 
-          {/* 하단 다음 버튼 */}
-          <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity style={styles.nextButton} activeOpacity={0.85} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>이해한 내용 확인하기</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
+        {/* 하단 다음 버튼 */}
+        <View style={styles.bottomButtonContainer}>
+          <TouchableOpacity style={styles.nextButton} activeOpacity={0.85} onPress={handleNext}>
+            <Text style={styles.nextButtonText}>이해한 내용 확인하기</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -180,7 +179,6 @@ const styles = StyleSheet.create({
     borderColor: '#23382B',
   },
   textInput: {
-    flex: 1,
     fontSize: 15,
     color: '#1A1A1A',
     lineHeight: 22,
