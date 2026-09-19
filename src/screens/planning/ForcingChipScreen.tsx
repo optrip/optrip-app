@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { usePlanning } from '../../lib/planningStore';
+import type { Preference } from '../../navigation/types';
 
-const PREFERENCES = [
+const PREFERENCES: { id: Preference; label: string; icon: string }[] = [
   { id: 'sea', label: '바다', icon: 'boat-outline' },
   { id: 'hiking', label: '하이킹·트레킹', icon: 'walk-outline' },
   { id: 'food', label: '맛집', icon: 'restaurant-outline' },
   { id: 'history', label: '역사·문화', icon: 'landmark-outline' },
-  { id: 'night', label: '야경', icon: 'moon-outline' },
+  { id: 'nightview', label: '야경', icon: 'moon-outline' },
   { id: 'activity', label: '액티비티', icon: 'fitness-outline' },
   { id: 'nature', label: '자연·풍경', icon: 'sunny-outline' },
   { id: 'healing', label: '힐링', icon: 'flower-outline' },
@@ -20,22 +22,20 @@ const PREFERENCES = [
 
 export default function PreferenceScreen() {
   const navigation = useNavigation<any>();
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { plan, setPreferences } = usePlanning();
+  const [selectedItems, setSelectedItems] = useState<Preference[]>(plan.preferences);
 
-  const handleToggle = (label: string) => {
-    if (selectedItems.includes(label)) {
-      setSelectedItems(selectedItems.filter((item) => item !== label));
+  const handleToggle = (preference: Preference) => {
+    if (selectedItems.includes(preference)) {
+      setSelectedItems(selectedItems.filter((item) => item !== preference));
     } else {
       if (selectedItems.length >= 3) return; // 최대 3개 제한
-      setSelectedItems([...selectedItems, label]);
+      setSelectedItems([...selectedItems, preference]);
     }
   };
 
   const handleNext = () => {
-    // TODO: 선택된 취향 데이터를 전역 스토어에 저장하는 로직 추가
-    // setPlanningData({ preferences: selectedItems });
-
-    // 로딩 화면으로 이동
+    setPreferences(selectedItems);
     navigation.navigate('Loading');
   };
 
@@ -65,12 +65,12 @@ export default function PreferenceScreen() {
           {/* 칩 그리드 영역 */}
           <View style={styles.gridContainer}>
             {PREFERENCES.map((item) => {
-              const isSelected = selectedItems.includes(item.label);
+              const isSelected = selectedItems.includes(item.id);
               return (
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.chipCard, isSelected && styles.selectedChipCard]}
-                  onPress={() => handleToggle(item.label)}
+                  onPress={() => handleToggle(item.id)}
                   activeOpacity={0.8}
                 >
                   <Ionicons
