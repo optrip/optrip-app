@@ -34,7 +34,7 @@ type Transport = ItineraryRequest['transport'];
 function formatLegSummary(leg: ItineraryLeg) {
   const steps = leg.steps ?? [];
   if (!steps.length || leg.mode === '자동차') {
-    return `${leg.mode} ${formatDuration(leg.durationMinutes)}`;
+    return `${leg.mode} ${approxDuration(leg.durationMinutes)}`;
   }
   const walk = steps
     .filter((step) => step.mode === '도보')
@@ -43,9 +43,9 @@ function formatLegSummary(leg: ItineraryLeg) {
     .filter((step) => step.mode === '버스' || step.mode === '지하철')
     .reduce((sum, step) => sum + step.durationMinutes, 0);
   const parts = [];
-  if (transit) parts.push(`대중교통 ${formatDuration(transit)}`);
-  if (walk) parts.push(`도보 ${formatDuration(walk)}`);
-  return parts.join(' · ') || `${leg.mode} ${formatDuration(leg.durationMinutes)}`;
+  if (transit) parts.push(`대중교통 ${approxDuration(transit)}`);
+  if (walk) parts.push(`도보 ${approxDuration(walk)}`);
+  return parts.join(' · ') || `${leg.mode} ${approxDuration(leg.durationMinutes)}`;
 }
 
 function formatDuration(minutes: number) {
@@ -54,6 +54,10 @@ function formatDuration(minutes: number) {
   const hours = Math.floor(rounded / 60);
   const remainder = rounded % 60;
   return `${hours}시간${remainder ? ` ${remainder}분` : ''}`;
+}
+
+function approxDuration(minutes: number) {
+  return `약 ${formatDuration(minutes)}`;
 }
 
 function mergeRouteSteps(steps: ItineraryRouteStep[]) {
@@ -299,7 +303,7 @@ export function CoursePreviewScreen() {
             <View style={styles.stepBody}>
               <Text style={styles.stepTitle}>
                 {step.mode}
-                {step.lineName ? ` ${step.lineName}` : ''} · {formatDuration(step.durationMinutes)}
+                {step.lineName ? ` ${step.lineName}` : ''} · {approxDuration(step.durationMinutes)}
               </Text>
               {step.departureStop && step.arrivalStop ? (
                 <Text style={styles.stepDescription}>
@@ -317,7 +321,7 @@ export function CoursePreviewScreen() {
       </ScrollView>
       <View style={styles.modalTotal}>
         <Text style={styles.modalTotalLabel}>총 이동시간</Text>
-        <Text style={styles.modalTotalValue}>{formatDuration(displayedDetailTotal)}</Text>
+        <Text style={styles.modalTotalValue}>{approxDuration(displayedDetailTotal)}</Text>
       </View>
     </Pressable>
   );

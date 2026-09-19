@@ -25,6 +25,16 @@ export const MyPageScreen = () => {
     navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Schedule' }] });
   };
 
+  const editProfile = () => {
+    navigation.navigate('EditProfile', {
+      userInfo: {
+        name: profile.name,
+        gender: profile.gender === 'male' ? '남성' : '여성',
+        birthYear: profile.birthYear,
+      },
+    });
+  };
+
   const userName = profile.name ? `${profile.name} 님` : '승희 님';
 
   return (
@@ -48,7 +58,7 @@ export const MyPageScreen = () => {
               <Text style={styles.userRole}>OPTRIP 여행자</Text>
             </View>
           </View>
-          <TouchableOpacity activeOpacity={0.7} onPress={() => {}}>
+          <TouchableOpacity activeOpacity={0.7} onPress={editProfile}>
             <Text style={styles.editProfileText}>프로필 수정</Text>
           </TouchableOpacity>
         </View>

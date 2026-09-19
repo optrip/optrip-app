@@ -153,7 +153,7 @@ export function ScheduleScreen() {
       setDateRange({ start: startStr, end: endStr });
     }
 
-    navigation.navigate('Destination');
+    navigation.navigate('Companion');
   };
 
   const weekDays = ['일', '월', '화', '수', '목', '금', '토'];

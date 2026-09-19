@@ -34,7 +34,7 @@ export function CompanionScreen() {
 
   const select = (c: Companion) => {
     setCompanion(c);
-    navigation.navigate('Preference');
+    navigation.navigate('Destination');
   };
 
   return (
@@ -67,7 +67,7 @@ export function CompanionScreen() {
         </View>
 
         <View style={styles.bottom}>
-          <SkipLink onPress={() => navigation.navigate('Preference')} />
+          <SkipLink onPress={() => navigation.navigate('Destination')} />
         </View>
       </View>
     </SafeAreaView>

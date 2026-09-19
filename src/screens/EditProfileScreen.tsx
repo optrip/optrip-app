@@ -18,7 +18,7 @@ export default function EditProfileScreen({ route, navigation }: any) {
 
   const handleSave = () => {
     setName(name);
-    setGender(gender);
+    setGender(gender === '남성' ? 'male' : 'female');
     setBirthYear(birthYear);
 
     alert('저장되었습니다!');

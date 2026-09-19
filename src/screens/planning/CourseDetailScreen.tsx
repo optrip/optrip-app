@@ -28,6 +28,10 @@ function formatDuration(minutes: number) {
   return `${hours}시간${remainder ? ` ${remainder}분` : ''}`;
 }
 
+function approxDuration(minutes: number) {
+  return `약 ${formatDuration(minutes)}`;
+}
+
 export function CourseDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
@@ -269,7 +273,7 @@ export function CourseDetailScreen() {
               {place.leg && index < places.length - 1 ? (
                 <View style={styles.legRow}>
                   <Text style={styles.legText}>
-                    {place.leg.mode} · {formatDuration(place.leg.durationMinutes)}
+                    {place.leg.mode} · {approxDuration(place.leg.durationMinutes)}
                   </Text>
                 </View>
               ) : null}
