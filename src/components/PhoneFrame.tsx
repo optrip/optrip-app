@@ -119,13 +119,14 @@ const screen: ViewStyle = {
   height: PHONE_HEIGHT,
   borderRadius: RADIUS - BEZEL,
   overflow: 'hidden',
-  backgroundColor: '#fff',
+  backgroundColor: '#F9F8F4',
   position: 'relative',
 };
 
 const contentArea: ViewStyle = {
   flex: 1,
   paddingTop: SCREEN_TOP_PADDING,
+  backgroundColor: '#F9F8F4',
 };
 
 const devBar: ViewStyle = {
