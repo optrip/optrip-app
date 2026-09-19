@@ -52,7 +52,7 @@ export const HomeScreen = () => {
   // 여행 스케줄링 시작 함수 (플래닝 데이터 리셋 후 Schedule 화면으로 이동)
   const startPlanning = () => {
     reset();
-    navigation.navigate('Schedule');
+    navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Schedule' }] });
   };
 
   const userName = profile.name ? `${profile.name}님` : '승희님';

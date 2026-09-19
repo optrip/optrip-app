@@ -29,6 +29,7 @@ export function RegionCandidatesScreen() {
     setError(null);
     recommendRegions({
       purposes: plan.interpretation?.purposes ?? plan.preferences.map((p) => PREFERENCE_LABEL[p]),
+      destinations: plan.destinations,
       excludeRegions: plan.excludeRegions,
       limit: 3,
     })
@@ -44,7 +45,7 @@ export function RegionCandidatesScreen() {
     return () => {
       active = false;
     };
-  }, [plan.excludeRegions, plan.interpretation?.purposes, plan.preferences]);
+  }, [plan.destinations, plan.excludeRegions, plan.interpretation?.purposes, plan.preferences]);
   const detailButton = (region: RegionCandidate) => (
     <Pressable
       style={styles.detailButton}

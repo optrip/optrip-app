@@ -1,484 +1,223 @@
-import { useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Alert, Animated } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import type { TransportLeg } from '../../api/recommend';
-import { useOnboarding } from '../../lib/onboardingStore';
+import { GoogleCourseMap } from '../../components/planning/GoogleCourseMap';
 import { usePlanning } from '../../lib/planningStore';
-import { colors, spacing } from '../../lib/theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
-
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CourseDetail'>;
 type Rt = RouteProp<OnboardingStackParamList, 'CourseDetail'>;
 
-const BLUE = '#0088FF';
-const PANEL_BG = '#E8EEFB'; // 라이트 블루 패널 (figma rgba(164,190,237,0.2))
-const TAB_INACTIVE = '#EEEEEE';
-
-// 이동수단 -> 아이콘 매핑
-function transportIcon(mode: string): keyof typeof Ionicons.glyphMap {
-  if (mode.includes('도보')) return 'walk-outline';
-  if (mode.includes('자동차') || mode.includes('택시')) return 'car-outline';
-  if (mode.includes('버스')) return 'bus-outline';
-  if (mode.includes('지하철') || mode.includes('전철') || mode.includes('기차'))
-    return 'train-outline';
-  return 'navigate-outline';
-}
-
-// "도보 · 약 5분 소요" / "지하철 이용 · 1회 환승 · 약 15분 소요"
-function transportLabel(t: TransportLeg): string {
-  if (!t) return '';
-  const parts: string[] = [];
-  parts.push(t.mode.includes('도보') ? '도보' : `${t.mode} 이용`);
-  if (t.note && t.note.trim()) parts.push(t.note.trim());
-  parts.push(`약 ${t.durationMinutes}분 소요`);
-  return parts.join(' · ');
+function formatDuration(minutes: number) {
+  const rounded = Math.max(1, Math.round(minutes));
+  if (rounded < 60) return `${rounded}분`;
+  const hours = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${hours}시간${remainder ? ` ${remainder}분` : ''}`;
 }
 
 export function CourseDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Rt>();
-  const { profile, saveTrip } = useOnboarding();
   const { plan } = usePlanning();
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [saved, setSaved] = useState(!!params.savedCourse); // 히스토리 진입 시 이미 저장된 상태
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-
-  // 히스토리에서 진입한 경우 저장된 코스(savedCourse)를 우선 사용, 아니면 현재 플랜에서
   const course = params.savedCourse ?? plan.courses?.courses[params.courseIndex];
-  const regionName = params.savedRegionName ?? plan.courses?.regionName ?? plan.result?.regionName ?? '';
-  const displayName = profile.name || 'ㅇㅇ';
+  const regionName =
+    params.savedRegionName ?? plan.courses?.regionName ?? plan.result?.regionName ?? '';
+  const [selectedDay, setSelectedDay] = useState(0);
 
-  if (!course) {
+  const day = course?.days[selectedDay] ?? course?.days[0];
+  const mapPlaces = useMemo(
+    () =>
+      (day?.visits ?? []).map((visit) => ({
+        contentId: `${day?.day ?? 1}-${visit.order}`,
+        title: visit.name,
+        latitude: visit.latitude,
+        longitude: visit.longitude,
+        order: visit.order,
+      })),
+    [day],
+  );
+  const connectionPaths = useMemo(
+    () =>
+      (day?.visits ?? []).slice(0, -1).map((visit, index) => [
+        { lat: visit.latitude, lng: visit.longitude },
+        {
+          lat: day!.visits[index + 1].latitude,
+          lng: day!.visits[index + 1].longitude,
+        },
+      ]),
+    [day],
+  );
+
+  if (!course || !day) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.center}>
-          <Text style={styles.empty}>코스 정보를 찾을 수 없어요</Text>
-          <Pressable onPress={goHome} hitSlop={12}>
-            <Text style={styles.homeText}>홈으로</Text>
+        <View style={styles.emptyWrap}>
+          <Text style={styles.empty}>저장된 여행 정보를 찾을 수 없어요.</Text>
+          <Pressable onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.homeText}>홈으로 돌아가기</Text>
           </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
-  const day = course.days.find((d) => d.day === selectedDay) ?? course.days[0];
-
-  // 버튼 눌렀을 때 통통 튀는 인터랙션 (눌림 → 살짝 커졌다 복귀)
-  const bounce = () => {
-    Animated.sequence([
-      Animated.spring(scale, { toValue: 0.82, useNativeDriver: true, speed: 50, bounciness: 0 }),
-      Animated.spring(scale, { toValue: 1.12, useNativeDriver: true, speed: 20, bounciness: 14 }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 10 }),
-    ]).start();
-  };
-
-  // [경로 저장] 내 여행 화면에 코스 저장 (hanyoung 추가 기능 유지)
-  const onSave = () => {
-    bounce();
-    if (saved) return; // 중복 저장 방지 (인터랙션은 그대로 실행)
-    saveTrip({
-      title: `${regionName} ${course.purpose} 코스`,
-      desc: `${course.days.length}일 코스`,
-      image: 'https://picsum.photos/800/600',
-      course,        // 히스토리에서 다시 열 수 있도록 코스 데이터 저장
-      regionName,
-    });
-    setSaved(true);
-    Alert.alert('저장 완료', '내 여행 화면에 코스가 저장되었습니다!');
-  };
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconBtn}>
-          <Ionicons name="chevron-back" size={26} color={colors.textStrong} />
+    <SafeAreaView
+      style={[styles.safe, Platform.OS === 'web' && styles.webSafe]}
+      edges={['top', 'bottom']}
+    >
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+          <Ionicons name="chevron-back" size={26} color="#252725" />
         </Pressable>
-        <Pressable onPress={goHome} hitSlop={12} style={styles.iconBtn}>
-          <Ionicons name="home-outline" size={24} color={colors.textStrong} />
+        <Text style={styles.headerText}>저장한 여행</Text>
+        <Pressable
+          onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
+          hitSlop={12}
+        >
+          <Ionicons name="home-outline" size={25} color="#252725" />
         </Pressable>
       </View>
 
-      <Text style={styles.title}>
-        {displayName}님을 위한{'\n'}
-        {regionName} {course.purpose} 여행 경로
-      </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>
+          {regionName} ·{' '}
+          {course.days.length === 1
+            ? '당일'
+            : `${course.days.length - 1}박 ${course.days.length}일`}
+        </Text>
+        <Text style={styles.summary}>{course.summary}</Text>
 
-      {/* Kakao Map: day.visits 를 순서대로 마커/폴리라인으로 표시 */}
-      {(() => {
-        const visits = day.visits.map(v => ({
-          lat: v.latitude,
-          lng: v.longitude,
-          name: v.name,
-          order: v.order,
-        }));
-        const mapHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-            <style>
-              * { margin: 0; padding: 0; }
-              body { width: 100%; height: 100vh; }
-              #map { width: 100%; height: 100%; }
-            </style>
-          </head>
-          <body>
-            <div id="map"></div>
-            <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=73357f5538851e9d44c950f736a17924&autoload=false&libraries=services"></script>
-            <script>
-              kakao.maps.load(function() {
-                var visits = ${JSON.stringify(visits)};
-                if (!visits.length) return;
-                var container = document.getElementById('map');
-                var center = new kakao.maps.LatLng(visits[0].lat, visits[0].lng);
-                var map = new kakao.maps.Map(container, { center: center, level: 7 });
-                var path = [];
-                visits.forEach(function(v) {
-                  var pos = new kakao.maps.LatLng(v.lat, v.lng);
-                  path.push(pos);
-                  var overlay = new kakao.maps.CustomOverlay({
-                    position: pos,
-                    map: map,
-                    content: '<div style="width:28px;height:28px;background:#0088FF;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + v.order + '</div>',
-                    yAnchor: 0.5,
-                    xAnchor: 0.5
-            });
-                });
-                if (path.length > 1) {
-                  var polyline = new kakao.maps.Polyline({
-                    path: path,
-                    strokeWeight: 3,
-                    strokeColor: '#0088FF',
-                    strokeOpacity: 0.8,
-                    strokeStyle: 'solid'
-                  });
-                  polyline.setMap(map);
-                }
-                var bounds = new kakao.maps.LatLngBounds();
-                path.forEach(function(p) { bounds.extend(p); });
-                map.setBounds(bounds);
-              });
-            </script>
-          </body>
-          </html>
-        `;
-        return (
-          <iframe
-            srcDoc={mapHtml}
-            style={{
-              width: '100%',
-              height: 180,
-              border: 'none',
-              borderRadius: 20,
-              marginHorizontal: 20,
-            } as any}
-            title="kakaomap"
-          />
-        );
-      })()}
-
-
-      {/* DAY 탭 (패널 위에 붙는 탭 모양) */}
-      <View style={styles.tabs}>
-        {course.days.map((d) => {
-          const active = d.day === day.day;
-          return (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabs}
+        >
+          {course.days.map((item, index) => (
             <Pressable
-              key={d.day}
-              onPress={() => setSelectedDay(d.day)}
-              style={[styles.tab, active ? styles.tabActive : styles.tabInactive]}
+              key={item.day}
+              style={[styles.tab, selectedDay === index && styles.activeTab]}
+              onPress={() => setSelectedDay(index)}
             >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>DAY {d.day}</Text>
+              <Text style={[styles.tabText, selectedDay === index && styles.activeTabText]}>
+                DAY {item.day}
+              </Text>
             </Pressable>
-          );
-        })}
-      </View>
+          ))}
+        </ScrollView>
 
-      {/* 일자별 상세 경로 패널 */}
-      <View style={styles.panel}>
-        <ScrollView contentContainerStyle={styles.timeline} showsVerticalScrollIndicator={false}>
-          {day.visits.map((visit, idx) => {
-            const isLast = idx === day.visits.length - 1;
-            return (
-              <View key={`${visit.order}-${idx}`} style={styles.visitBlock}>
-                {/* 좌측 레일: 번호 배지 + 세로 라인 */}
-                <View style={styles.rail}>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{visit.order}</Text>
-                  </View>
-                  {!isLast && <View style={styles.railLine} />}
+        <GoogleCourseMap places={mapPlaces} connectionPaths={connectionPaths} />
+
+        <View style={styles.list}>
+          {day.visits.map((visit, index) => (
+            <View key={`${visit.order}-${visit.name}`}>
+              <View style={styles.placeCard}>
+                <View style={styles.placeIcon}>
+                  <Text style={styles.placeNumber}>{visit.order}</Text>
                 </View>
-
-                {/* 내용: 이름 + 구분선 + 설명 + 이동수단 말풍선 */}
-                <View style={styles.content}>
-                  <Text style={styles.visitName}>{visit.name}</Text>
-                  <View style={styles.divider} />
-                  <Text style={styles.visitDesc}>{visit.description}</Text>
-
-                  {visit.transportToNext && (
-                    <View style={styles.transportRow}>
-                      <View style={styles.transportArrow} />
-                      <View style={styles.transportPill}>
-                        <Ionicons
-                          name={transportIcon(visit.transportToNext.mode)}
-                          size={18}
-                          color="#1D1B20"
-                        />
-                        <Text style={styles.transportText}>
-                          {transportLabel(visit.transportToNext)}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
+                <View style={styles.placeBody}>
+                  <Text style={styles.placeName}>
+                    {visit.order} · {visit.name}
+                  </Text>
+                  <Text style={styles.placeDescription} numberOfLines={2}>
+                    {visit.description}
+                  </Text>
                 </View>
               </View>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* 경로 저장 */}
-      <Animated.View style={[styles.saveBtnWrap, { transform: [{ scale }] }]}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.saveBtn,
-            saved && styles.saveBtnSaved,
-            pressed && styles.saveBtnPressed,
-          ]}
-          onPress={onSave}
-          onPressIn={() => Animated.spring(scale, { toValue: 0.9, useNativeDriver: true, speed: 50, bounciness: 0 }).start()}
-        >
-          <Ionicons
-            name={saved ? 'bookmark' : 'bookmark-outline'}
-            size={26}
-            color={saved ? '#FFFFFF' : '#111111'}
-          />
-          <Text style={[styles.saveText, saved && styles.saveTextSaved]}>
-            {saved ? '저장됨' : '경로 저장'}
-          </Text>
-        </Pressable>
-      </Animated.View>
+              {visit.transportToNext && index < day.visits.length - 1 ? (
+                <View style={styles.legRow}>
+                  <Ionicons
+                    name={
+                      visit.transportToNext.mode.includes('자동차')
+                        ? 'car-outline'
+                        : 'navigate-outline'
+                    }
+                    size={13}
+                    color="#998354"
+                  />
+                  <Text style={styles.legText}>
+                    {visit.transportToNext.mode} ·{' '}
+                    {formatDuration(visit.transportToNext.durationMinutes)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  topBar: {
+  safe: { flex: 1, backgroundColor: '#FCFAF7' },
+  webSafe: { marginTop: -56, paddingTop: 56 },
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
+    paddingHorizontal: 28,
+    paddingTop: 15,
+    paddingBottom: 18,
+    gap: 10,
   },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  empty: { fontSize: 16, color: colors.textSecondary },
-  homeText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '500',
-    color: '#111111',
-    textAlign: 'center',
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
-    lineHeight: 33,
-  },
-  mapPlaceholder: {
-    marginHorizontal: 20,
-    height: 130,
-    borderRadius: 20,
-    backgroundColor: '#EEF2F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-  mapHint: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
+  headerText: { flex: 1, fontSize: 12, color: '#77766F' },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 28, paddingBottom: 28 },
+  title: { fontSize: 25, fontWeight: '700', color: '#252725' },
+  summary: { marginTop: 6, marginBottom: 15, fontSize: 12, color: '#77766F' },
   tabs: {
-    flexDirection: 'row',
-    marginTop: spacing.lg,
-    marginLeft: 24,
-    gap: 7,
+    minWidth: '100%',
+    padding: 3,
+    marginBottom: 11,
+    borderRadius: 10,
+    backgroundColor: '#F0EDE5',
   },
-  tab: {
-    width: 96,
-    paddingVertical: 9,
-    alignItems: 'center',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  tabActive: {
-    backgroundColor: PANEL_BG,
-  },
-  tabInactive: {
-    backgroundColor: TAB_INACTIVE,
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#767676',
-  },
-  tabTextActive: {
-    color: '#000000',
-    fontWeight: '600',
-  },
-  panel: {
-    flex: 1,
-    marginHorizontal: 20,
-    marginBottom: spacing.md,
-    backgroundColor: PANEL_BG,
-    borderRadius: 20,
-    borderTopLeftRadius: 0,
-  },
-  timeline: {
-    padding: 14,
-    paddingBottom: 130, // 마지막 방문지가 패널 하단/플로팅 버튼에 붙지 않도록 여유
-  },
-  visitBlock: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  rail: {
-    width: 40,
-    alignItems: 'center',
-  },
-  badge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: BLUE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  railLine: {
-    flex: 1,
-    width: 3,
-    backgroundColor: BLUE,
-    marginVertical: 2,
-  },
-  content: {
-    flex: 1,
-    marginLeft: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingTop: 4,
-    paddingBottom: spacing.md,
-    gap: 4,
-  },
-  visitName: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E3E3E3',
-    marginVertical: 2,
-  },
-  visitDesc: {
-    fontSize: 15,
-    color: '#000000',
-    lineHeight: 20,
-  },
-  transportRow: {
+  tab: { minWidth: 92, flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 8 },
+  activeTab: { backgroundColor: '#FFFFFF' },
+  tabText: { fontSize: 10, color: '#77766F' },
+  activeTabText: { fontWeight: '700', color: '#24443A' },
+  list: { marginTop: 11 },
+  placeCard: {
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  transportArrow: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 7,
-    borderBottomWidth: 7,
-    borderRightWidth: 9,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: '#FFFFFF',
-    marginRight: -1,
-  },
-  transportPill: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-  },
-  transportText: {
-    fontSize: 15,
-    color: '#000000',
-    textAlign: 'center',
-  },
-  saveBtnWrap: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.lg,
-    borderRadius: 35,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    shadowOffset: { width: 1.6, height: 3.3 },
-    elevation: 6,
-  },
-  saveBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#FFFFFF',
+    gap: 11,
+    padding: 11,
     borderWidth: 1,
-    borderColor: '#999999',
+    borderColor: '#E4DDD5',
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+  },
+  placeIcon: {
+    width: 43,
+    height: 43,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    backgroundColor: '#E9EEE8',
   },
-  saveBtnPressed: {
-    backgroundColor: '#F0F0F0',
+  placeNumber: { fontSize: 15, fontWeight: '700', color: '#24443A' },
+  placeBody: { flex: 1 },
+  placeName: { fontSize: 14, fontWeight: '700', color: '#252725' },
+  placeDescription: { marginTop: 5, fontSize: 10, lineHeight: 15, color: '#77766F' },
+  legRow: {
+    minHeight: 37,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  saveBtnSaved: {
-    backgroundColor: BLUE,
-    borderColor: BLUE,
-  },
-  saveText: {
-    fontSize: 10,
-    fontWeight: '300',
-    color: '#111111',
-  },
-  saveTextSaved: {
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
+  legText: { fontSize: 10, fontWeight: '600', color: '#998354' },
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
+  empty: { fontSize: 14, color: '#77766F' },
+  homeText: { fontSize: 13, fontWeight: '600', color: '#24443A' },
 });

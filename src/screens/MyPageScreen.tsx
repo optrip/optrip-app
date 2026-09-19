@@ -22,7 +22,7 @@ export const MyPageScreen = () => {
 
   const startPlanning = () => {
     reset();
-    navigation.navigate('Schedule');
+    navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'Schedule' }] });
   };
 
   const userName = profile.name ? `${profile.name} 님` : '승희 님';
