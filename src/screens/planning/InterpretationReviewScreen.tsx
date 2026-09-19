@@ -35,10 +35,10 @@ export function InterpretationReviewScreen() {
     );
 
     interpretTravel({
-      text: purposes.join(', '),
+      text: plan.wantToDo.trim() || purposes.join(', '),
       dates,
       companion: plan.companion ? COMPANION_LABEL[plan.companion] : '',
-      destinations: [],
+      destinations: plan.destinations,
     })
       .then((result) => {
         if (!active) return;
@@ -57,6 +57,8 @@ export function InterpretationReviewScreen() {
     plan.dateRange.start,
     plan.interpretation,
     plan.preferences,
+    plan.wantToDo,
+    plan.destinations,
     setInterpretation,
   ]);
 

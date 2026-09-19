@@ -26,7 +26,9 @@ export type Preference =
   | 'nightview'; // 야경
 
 export type OnboardingStackParamList = {
+  FirstLogoScreen: undefined;
   Welcome: undefined;
+  Welcome2: undefined;
   Intro: undefined;
   InfoNotice: undefined;
   NameInput: undefined;
@@ -38,6 +40,10 @@ export type OnboardingStackParamList = {
   Budget: undefined;
   Schedule: undefined;
   Companion: undefined;
+  Destination: undefined;
+  WantToDo: undefined;
+  ForcingChip: undefined;
+  Loading: undefined;
   Preference: undefined;
   Transport: undefined;
   InterpretationReview: undefined;

@@ -2,7 +2,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native'; // ActivityIndicator 삭제
 
 import { PhoneFrame } from './src/components/PhoneFrame';
 import { queryClient } from './src/lib/queryClient';
@@ -18,7 +17,7 @@ function Root() {
 
   return (
     <NavigationContainer>
-      <OnboardingNavigator initialRouteName={onboarded ? 'Home' : 'Welcome'} />
+      <OnboardingNavigator initialRouteName={onboarded ? 'Home' : 'FirstLogoScreen'} />
       <StatusBar style="auto" />
     </NavigationContainer>
   );
@@ -39,10 +38,3 @@ export default function App() {
     </QueryClientProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-});

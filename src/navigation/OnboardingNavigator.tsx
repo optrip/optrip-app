@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { FirstLogoScreen } from '../screens/onboarding/FirstLogoScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
+import WelcomeScreen2 from '../screens/onboarding/WelcomeScreen2';
 import { IntroScreen } from '../screens/onboarding/IntroScreen';
 import { InfoNoticeScreen } from '../screens/onboarding/InfoNoticeScreen';
 import { NameInputScreen } from '../screens/onboarding/NameInputScreen';
@@ -12,6 +13,10 @@ import { MyTripsScreen } from '../screens/MyTripsScreen';
 import { BudgetScreen } from '../screens/onboarding/BudgetScreen';
 import { ScheduleScreen } from '../screens/planning/ScheduleScreen';
 import { CompanionScreen } from '../screens/planning/CompanionScreen';
+import { DestinationScreen } from '../screens/planning/DestinationScreen';
+import { WantToDoScreen } from '../screens/planning/WantToDoScreen';
+import ForcingChipScreen from '../screens/planning/ForcingChipScreen';
+import { LoadingScreen } from '../screens/planning/LoadingScreen';
 import { PreferenceScreen } from '../screens/planning/PreferenceScreen';
 import { TransportScreen } from '../screens/planning/TransportScreen';
 import { InterpretationReviewScreen } from '../screens/planning/InterpretationReviewScreen';
@@ -26,7 +31,7 @@ import { SelectionReviewScreen } from '../screens/planning/SelectionReviewScreen
 import { CoursePreviewScreen } from '../screens/planning/CoursePreviewScreen';
 import { CourseListScreen } from '../screens/planning/CourseListScreen';
 import { CourseDetailScreen } from '../screens/planning/CourseDetailScreen';
-import MyPageScreen from '../screens/MyPageScreen';
+import { MyPageScreen } from '../screens/MyPageScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 
 import type { OnboardingStackParamList } from './types';
@@ -37,13 +42,15 @@ type Props = {
   initialRouteName?: keyof OnboardingStackParamList;
 };
 
-export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
+export function OnboardingNavigator({ initialRouteName = 'FirstLogoScreen' }: Props) {
   return (
     <Stack.Navigator
       initialRouteName={initialRouteName}
       screenOptions={{ headerShown: false, animation: 'none' }}
     >
+      <Stack.Screen name="FirstLogoScreen" component={FirstLogoScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Welcome2" component={WelcomeScreen2} />
       <Stack.Screen name="Intro" component={IntroScreen} />
       <Stack.Screen name="InfoNotice" component={InfoNoticeScreen} />
       <Stack.Screen
@@ -91,6 +98,22 @@ export function OnboardingNavigator({ initialRouteName = 'Welcome' }: Props) {
         component={CompanionScreen}
         options={{ animation: 'slide_from_right' }}
       />
+      <Stack.Screen
+        name="Destination"
+        component={DestinationScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="WantToDo"
+        component={WantToDoScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="ForcingChip"
+        component={ForcingChipScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen name="Loading" component={LoadingScreen} options={{ animation: 'fade' }} />
       <Stack.Screen
         name="Preference"
         component={PreferenceScreen}

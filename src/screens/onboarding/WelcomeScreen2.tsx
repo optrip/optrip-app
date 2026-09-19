@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing } from '../../lib/theme';
 
-export const WelcomeScreen = () => {
+export const IntroScreen = () => {
   const navigation = useNavigation<any>();
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -28,11 +28,11 @@ export const WelcomeScreen = () => {
     const useNative = Platform.OS !== 'web';
     Animated.timing(opacity, {
       toValue: 0,
-      duration: 400,
+      duration: 400, // 페이드 아웃 지속 시간
       useNativeDriver: useNative,
     }).start(({ finished }) => {
       if (finished) {
-        navigation.navigate('Intro');
+        navigation.navigate('Welcome');
       }
     });
   };
@@ -40,21 +40,19 @@ export const WelcomeScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.content, { opacity }]}>
-        {/* 상단 헤더 영역 */}
+        {/* 상단 빈 공간 */}
         <View style={styles.header} />
 
-        {/* 중앙 메인 타이틀 및 설명 텍스트 영역 */}
+        {/* 중앙 메인 텍스트 영역 */}
         <View style={styles.mainSection}>
-          <Text style={styles.mainTitle}>
-            막연한 여행을{'\n'}
-            실행 가능한 하루로
-          </Text>
+          <Text style={styles.mainTitle}>환영합니다</Text>
           <Text style={styles.subTitle}>
-            관광데이터 · 취향 · 이동조건을{'\n'}한 흐름으로 연결합니다.
+            어디로 갈지 몰라도 괜찮아요.{'\n'}
+            원하는 여행을 말하면 함께 좁혀드릴게요.
           </Text>
         </View>
 
-        {/* 하단 안내 문구 및 시작하기 버튼 영역 */}
+        {/* 하단 안내 문구 및 시작하기 버튼 */}
         <View style={styles.bottomSection}>
           <Text style={styles.captionText}>원하는 여행을 바로 시작해보세요.</Text>
           <TouchableOpacity
@@ -93,7 +91,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
-    lineHeight: 36,
     marginBottom: 12,
   },
   subTitle: {
@@ -125,4 +122,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WelcomeScreen;
+export default IntroScreen;

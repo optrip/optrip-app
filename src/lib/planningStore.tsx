@@ -13,6 +13,8 @@ export type DateRange = {
 };
 
 export type PlanningState = {
+  destinations: string[];
+  wantToDo: string;
   budget: string | null;
   dateRange: DateRange;
   noSpecificDate: boolean;
@@ -32,6 +34,8 @@ export type PlanningState = {
 
 type PlanningContextValue = {
   plan: PlanningState;
+  setDestinations: (destinations: string[]) => void;
+  setWantToDo: (wantToDo: string) => void;
   setBudget: (v: string | null) => void;
   setDateRange: (range: DateRange) => void;
   setNoSpecificDate: (v: boolean) => void;
@@ -52,6 +56,8 @@ type PlanningContextValue = {
 };
 
 const initial: PlanningState = {
+  destinations: [],
+  wantToDo: '',
   budget: null,
   dateRange: { start: null, end: null },
   noSpecificDate: false,
@@ -77,6 +83,8 @@ export function PlanningProvider({ children }: { children: ReactNode }) {
   const value = useMemo<PlanningContextValue>(
     () => ({
       plan,
+      setDestinations: (destinations) => setPlan((p) => ({ ...p, destinations })),
+      setWantToDo: (wantToDo) => setPlan((p) => ({ ...p, wantToDo })),
       setBudget: (budget) => setPlan((p) => ({ ...p, budget })),
       setDateRange: (dateRange) => setPlan((p) => ({ ...p, dateRange, noSpecificDate: false })),
       setNoSpecificDate: (noSpecificDate) =>

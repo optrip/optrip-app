@@ -1,88 +1,284 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ImageBackground,
+  SafeAreaView,
+  TouchableOpacity,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useOnboarding } from '../lib/onboardingStore';
 
-export default function MyPageScreen({ navigation }: any) {
-  const { profile } = useOnboarding();
+import { useOnboarding } from '../lib/onboardingStore';
+import { usePlanning } from '../lib/planningStore';
+import { colors, spacing } from '../lib/theme';
+
+export const MyPageScreen = () => {
+  const navigation = useNavigation<any>();
+  const { profile, savedTrips } = useOnboarding();
+  const { reset } = usePlanning();
+
+  const startPlanning = () => {
+    reset();
+    navigation.navigate('Schedule');
+  };
+
+  const userName = profile.name ? `${profile.name} 님` : '승희 님';
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>OpTrip</Text>
-        </View>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 상단 타이틀 */}
+        <Text style={styles.headerTitle}>MY</Text>
 
-        <View style={styles.profileSection}>
-          <Text style={styles.userName}>{profile.name} 님</Text>
-          <Text style={styles.userMeta}>
-            {profile.name} · {profile.gender} · {profile.birthYear}년생
-          </Text>
-        </View>
-
-        <View style={styles.menuSection}>
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => navigation.navigate('EditProfile', { userInfo: profile })}
-          >
-            <Text style={styles.menuText}>내 정보 수정하기</Text>
-            <Ionicons name="chevron-forward" size={20} color="#333" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.bottomBar}>
-          {/* 가방 버튼: 터치하면 내 여행 화면으로 이동 */}
-          <TouchableOpacity onPress={() => navigation.navigate('MyTrips')}>
-            <Ionicons name="briefcase-outline" size={28} color="#ccc" />
-          </TouchableOpacity>
-
-          {/* 홈 버튼: 터치하면 홈 화면으로 이동 */}
-          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-            <View style={styles.mainMarkerContainer}>
-              <Ionicons name="location" size={40} color="#ccc" />
+        {/* 프로필 카드 */}
+        <View style={styles.profileCard}>
+          <View style={styles.profileLeft}>
+            <View style={styles.avatarCircle}>
+              <Ionicons name="person-outline" size={24} color="#23382B" />
             </View>
-          </TouchableOpacity>
-
-          {/* 마이페이지 버튼: 현재 화면 표시 (파란색 활성화) */}
-          <TouchableOpacity onPress={() => navigation.navigate('MyPage')}>
-            <Ionicons name="person" size={28} color="#3B82F6" />
+            <View style={styles.profileInfo}>
+              <Text style={styles.userName}>{userName}</Text>
+              <Text style={styles.userRole}>OPTRIP 여행자</Text>
+            </View>
+          </View>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => {}}>
+            <Text style={styles.editProfileText}>프로필 수정</Text>
           </TouchableOpacity>
         </View>
+
+        {/* 저장한 여행 섹션 */}
+        <View style={styles.savedSection}>
+          <Text style={styles.sectionTitle}>저장한 여행</Text>
+
+          {savedTrips.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>저장된 여행이 없어요. 여행을 만들어볼까요?</Text>
+              <TouchableOpacity
+                style={styles.startButton}
+                activeOpacity={0.85}
+                onPress={startPlanning}
+              >
+                <Text style={styles.startButtonText}>여행 시작하기</Text>
+                <Ionicons name="chevron-forward" size={18} color="#23382B" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            savedTrips.map((trip) => (
+              <TouchableOpacity
+                key={trip.id}
+                style={styles.card}
+                activeOpacity={0.85}
+                onPress={() =>
+                  navigation.navigate('CourseDetail', {
+                    courseIndex: 0,
+                    savedCourse: trip.course,
+                    savedRegionName: trip.regionName,
+                  })
+                }
+              >
+                <ImageBackground
+                  source={{ uri: trip.image }}
+                  style={styles.cardBackground}
+                  imageStyle={{ borderRadius: 20, opacity: 0.85 }}
+                >
+                  <Text style={styles.tripTitle}>{trip.title}</Text>
+                  <Text style={styles.tripDesc}>{trip.desc}</Text>
+                </ImageBackground>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {/* 하단 네비게이션 바 */}
+      <View style={styles.bottomNav}>
+        {/* 좌측 */}
+        <TouchableOpacity
+          style={styles.navItem}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Ionicons name="home-outline" size={24} color="#777777" />
+          <Text style={styles.navLabel}>홈</Text>
+        </TouchableOpacity>
+
+        {/* 중앙 */}
+        <TouchableOpacity style={styles.navItem} activeOpacity={0.7} onPress={startPlanning}>
+          <Ionicons name="compass-outline" size={24} color="#777777" />
+          <Text style={styles.navLabel}>여행 시작하기</Text>
+        </TouchableOpacity>
+
+        {/* 우측 */}
+        <TouchableOpacity style={styles.navItem} activeOpacity={1}>
+          <View style={styles.activeIconBg}>
+            <Ionicons name="person" size={22} color="#23382B" />
+          </View>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>MY</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, backgroundColor: '#fff', justifyContent: 'space-between' },
-  header: { height: 60, justifyContent: 'center', paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  profileSection: { alignItems: 'center', paddingVertical: 40 },
-  userName: { fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 8 },
-  userMeta: { fontSize: 14, color: '#888' },
-  menuSection: { paddingHorizontal: 20, marginTop: 20, flex: 1 },
-  menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
-  menuText: { fontSize: 16, color: '#000', fontWeight: '500' },
-  
-  bottomBar: {
-    height: 80,
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background || '#F9F8F4',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.screenPaddingX || 20,
+    paddingTop: 24,
+    paddingBottom: 30,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 20,
+  },
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
+    marginBottom: 36,
+  },
+  profileLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EAF2ED',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  userRole: {
+    fontSize: 12,
+    color: '#777777',
+  },
+  editProfileText: {
+    fontSize: 12,
+    color: '#666666',
+    alignSelf: 'flex-end',
+  },
+  savedSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  emptyContainer: {
+    marginTop: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 16,
+  },
+  startButton: {
+    height: 52,
+    backgroundColor: '#F3F2EB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#23382B',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  startButtonText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#23382B',
+  },
+  card: {
+    height: 180,
+    marginBottom: 20,
+    borderRadius: 20,
+    backgroundColor: colors.cardDefault || '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.divider || '#EEEEEE',
+    overflow: 'hidden',
+  },
+  cardBackground: {
+    flex: 1,
+    padding: 25,
+    justifyContent: 'space-between',
+  },
+  tripTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textPrimary || '#1A1A1A',
+  },
+  tripDesc: {
+    fontSize: 14,
+    color: colors.textPrimary || '#1A1A1A',
+    marginTop: 5,
+    fontWeight: '600',
+  },
+  bottomNav: {
+    height: 68,
+    backgroundColor: '#F9F8F4',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingBottom: 20,
-    backgroundColor: '#fff',
+    paddingBottom: 8,
   },
-  mainMarkerContainer: {
-    marginTop: -40,
-    backgroundColor: '#fff',
-    borderRadius: 50,
-    padding: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  activeIconBg: {
+    width: 36,
+    height: 28,
+    backgroundColor: '#EAF2ED',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#777777',
+    marginTop: 2,
+  },
+  navLabelActive: {
+    color: '#23382B',
+    fontWeight: 'bold',
   },
 });
+
+export default MyPageScreen;
