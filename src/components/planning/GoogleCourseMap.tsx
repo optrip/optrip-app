@@ -7,6 +7,7 @@ export type CourseMapPlace = {
   title: string;
   latitude: number;
   longitude: number;
+  order?: number;
 };
 
 type Props = {

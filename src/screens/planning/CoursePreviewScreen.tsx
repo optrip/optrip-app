@@ -20,6 +20,7 @@ import {
   type ItineraryResponse,
   type ItineraryLeg,
   type ItineraryRequest,
+  type ItineraryRouteStep,
 } from '../../api/itinerary';
 import { decodeGooglePolyline } from '../../api/routes';
 import type { RoutePoint } from '../../api/routes';
@@ -31,28 +32,10 @@ import type { OnboardingStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'CoursePreview'>;
 type Transport = ItineraryRequest['transport'];
 function formatLegSummary(leg: ItineraryLeg) {
-  const transitSteps = (leg.steps ?? []).filter((step) => ['버스', '지하철'].includes(step.mode));
-  if (transitSteps.length) {
-    const route = transitSteps
-      .map((step) => `${step.mode}${step.lineName ? ` ${step.lineName}` : ''}`)
-      .join(' → ');
-    const transfers = transitSteps.length - 1;
-    return `${route}${transfers ? ` · ${transfers}회 환승` : ''} · 총 ${Math.max(1, Math.round(leg.durationMinutes))}분`;
-  }
-  const minutes = Math.max(1, Math.round(leg.durationMinutes));
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  const duration = hours ? `${hours}시간${remainder ? ` ${remainder}분` : ''}` : `${minutes}분`;
-  const transport = leg.summary
-    .replace(/(?:약\s*)?\d+\s*분(?:\s*소요)?/g, '')
-    .replace(/\s*·\s*$/, '')
-    .trim();
-  return `${transport || leg.mode} · ${duration}`;
-}
-
-function formatLegBreakdown(leg: ItineraryLeg) {
   const steps = leg.steps ?? [];
-  if (!steps.length || leg.mode === '자동차') return null;
+  if (!steps.length || leg.mode === '자동차') {
+    return `${leg.mode} ${Math.max(1, Math.round(leg.durationMinutes))}분`;
+  }
   const walk = steps
     .filter((step) => step.mode === '도보')
     .reduce((sum, step) => sum + step.durationMinutes, 0);
@@ -62,7 +45,31 @@ function formatLegBreakdown(leg: ItineraryLeg) {
   const parts = [];
   if (transit) parts.push(`대중교통 ${transit}분`);
   if (walk) parts.push(`도보 ${walk}분`);
-  return parts.join(' · ') || null;
+  return parts.join(' · ') || `${leg.mode} ${Math.max(1, Math.round(leg.durationMinutes))}분`;
+}
+
+function formatDuration(minutes: number) {
+  const rounded = Math.max(1, Math.round(minutes));
+  if (rounded < 60) return `${rounded}분`;
+  const hours = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${hours}시간${remainder ? ` ${remainder}분` : ''}`;
+}
+
+function mergeRouteSteps(steps: ItineraryRouteStep[]) {
+  return steps.reduce<ItineraryRouteStep[]>((merged, step) => {
+    const previous = merged[merged.length - 1];
+    if (previous?.mode === '도보' && step.mode === '도보') {
+      merged[merged.length - 1] = {
+        ...previous,
+        durationMinutes: previous.durationMinutes + step.durationMinutes,
+        distanceMeters: previous.distanceMeters + step.distanceMeters,
+      };
+    } else {
+      merged.push({ ...step });
+    }
+    return merged;
+  }, []);
 }
 export function CoursePreviewScreen() {
   const navigation = useNavigation<Nav>();
@@ -79,7 +86,12 @@ export function CoursePreviewScreen() {
   const [retry, setRetry] = useState(0);
   const [transport, setTransport] = useState<Transport>('대중교통');
   const [transportOpen, setTransportOpen] = useState(false);
-  const [mapFocus, setMapFocus] = useState<{ points: RoutePoint[]; key: number } | null>(null);
+  const [mapFocus, setMapFocus] = useState<{
+    points: RoutePoint[];
+    placeIds: string[];
+    connection: boolean;
+    key: number;
+  } | null>(null);
   const [detailLeg, setDetailLeg] = useState<{
     leg: ItineraryLeg;
     from: string;
@@ -113,11 +125,12 @@ export function CoursePreviewScreen() {
   const mapPlaces = useMemo(
     () =>
       places
-        .map((place) => ({
+        .map((place, index) => ({
           contentId: place.contentId,
           title: getPlaceDisplayTitle(place.title, regionName),
           latitude: Number(place.mapy),
           longitude: Number(place.mapx),
+          order: index + 1,
         }))
         .filter((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude)),
     [places, regionName],
@@ -151,6 +164,19 @@ export function CoursePreviewScreen() {
           }),
     [loading, places, items],
   );
+  const visibleMapPlaces = useMemo(
+    () =>
+      mapFocus
+        ? mapPlaces.filter((place) => mapFocus.placeIds.includes(place.contentId))
+        : mapPlaces,
+    [mapFocus, mapPlaces],
+  );
+  const visibleRoutePaths = mapFocus && !mapFocus.connection ? [mapFocus.points] : routePaths;
+  const visibleConnectionPaths = mapFocus
+    ? mapFocus.connection
+      ? [mapFocus.points]
+      : []
+    : connectionPaths;
   useEffect(() => {
     if (selectedDay >= dayCount) setSelectedDay(0);
   }, [dayCount, selectedDay]);
@@ -224,6 +250,64 @@ export function CoursePreviewScreen() {
     });
     setSaved(true);
   };
+
+  const routeDetailSheet = (
+    <Pressable style={styles.modalSheet} onPress={() => undefined}>
+      <View style={styles.modalHandle} />
+      <View style={styles.modalHeader}>
+        <View style={styles.modalTitleBody}>
+          <Text style={styles.modalTitle}>이동 상세</Text>
+          <Text style={styles.modalRoute} numberOfLines={1}>
+            {detailLeg?.from} → {detailLeg?.to}
+          </Text>
+        </View>
+        <Pressable onPress={() => setDetailLeg(null)} hitSlop={10}>
+          <Ionicons name="close" size={23} color="#252725" />
+        </Pressable>
+      </View>
+      <ScrollView style={styles.stepList} showsVerticalScrollIndicator={false}>
+        {(detailLeg?.leg.steps?.length
+          ? mergeRouteSteps(detailLeg.leg.steps)
+          : [
+              {
+                mode: detailLeg?.leg.mode ?? '이동',
+                durationMinutes: detailLeg?.leg.durationMinutes ?? 0,
+                distanceMeters: detailLeg?.leg.distanceMeters ?? 0,
+              },
+            ]
+        ).map((step, index) => (
+          <View key={`${step.mode}-${index}`} style={styles.stepRow}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>{index + 1}</Text>
+            </View>
+            <View style={styles.stepBody}>
+              <Text style={styles.stepTitle}>
+                {step.mode}
+                {step.lineName ? ` ${step.lineName}` : ''} · {formatDuration(step.durationMinutes)}
+              </Text>
+              {step.departureStop && step.arrivalStop ? (
+                <Text style={styles.stepDescription}>
+                  {step.departureStop} → {step.arrivalStop}
+                  {step.stopCount ? ` · ${step.stopCount}개 정류장` : ''}
+                </Text>
+              ) : step.mode === '도보' ? (
+                <Text style={styles.stepDescription}>
+                  도보 이동 · {(step.distanceMeters / 1000).toFixed(1)}km
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+      <View style={styles.modalTotal}>
+        <Text style={styles.modalTotalLabel}>총 이동시간</Text>
+        <Text style={styles.modalTotalValue}>
+          {formatDuration(detailLeg?.leg.durationMinutes ?? 0)}
+        </Text>
+      </View>
+    </Pressable>
+  );
+
   return (
     <SafeAreaView
       style={[styles.safe, Platform.OS === 'web' && styles.webSafe]}
@@ -323,12 +407,20 @@ export function CoursePreviewScreen() {
             </Pressable>
           ))}
         </ScrollView>
-        <GoogleCourseMap
-          places={mapPlaces}
-          routePaths={routePaths}
-          connectionPaths={connectionPaths}
-          focus={mapFocus}
-        />
+        <View style={styles.mapWrap}>
+          <GoogleCourseMap
+            places={visibleMapPlaces}
+            routePaths={visibleRoutePaths}
+            connectionPaths={visibleConnectionPaths}
+            focus={mapFocus}
+          />
+          {mapFocus && (
+            <Pressable style={styles.showAllButton} onPress={() => setMapFocus(null)}>
+              <Ionicons name="map-outline" size={14} color="#24443A" />
+              <Text style={styles.showAllText}>전체 일정 보기</Text>
+            </Pressable>
+          )}
+        </View>
         {loading && <Text style={styles.status}>{transport} 경로를 확인하고 있어요.</Text>}
         {error && (
           <View>
@@ -344,47 +436,30 @@ export function CoursePreviewScreen() {
             const leg = items.find((item) => item.place.contentId === place.contentId)?.legToNext;
             return (
               <View key={place.contentId}>
-                <View style={styles.placeCard}>
-                  <Pressable
-                    style={styles.placeMapButton}
-                    onPress={() =>
-                      setMapFocus({
-                        points: [{ lat: Number(place.mapy), lng: Number(place.mapx) }],
-                        key: Date.now(),
-                      })
-                    }
-                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 지도에서 보기`}
-                  >
-                    <View style={styles.imageWrap}>
-                      {place.imageUrl ? (
-                        <Image source={{ uri: place.imageUrl }} style={styles.image} />
-                      ) : (
-                        <Ionicons
-                          name={place.purpose.includes('카페') ? 'cafe-outline' : 'image-outline'}
-                          size={23}
-                          color="#24443A"
-                        />
-                      )}
-                    </View>
-                    <View style={styles.placeBody}>
-                      <Text style={styles.placeName}>
-                        {index + 1} · {getPlaceDisplayTitle(place.title, regionName)}
-                      </Text>
-                      <Text style={styles.purpose}>{place.purpose}</Text>
-                    </View>
-                  </Pressable>
-                  <Pressable
-                    style={styles.detailButton}
-                    onPress={() =>
-                      navigation.navigate('PlaceDetail', { contentId: place.contentId })
-                    }
-                    hitSlop={8}
-                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 상세보기`}
-                  >
-                    <Text style={styles.detailText}>상세보기</Text>
-                    <Ionicons name="chevron-forward" size={14} color="#77766F" />
-                  </Pressable>
-                </View>
+                <Pressable
+                  style={styles.placeCard}
+                  onPress={() => navigation.navigate('PlaceDetail', { contentId: place.contentId })}
+                  accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 상세보기`}
+                >
+                  <View style={styles.imageWrap}>
+                    {place.imageUrl ? (
+                      <Image source={{ uri: place.imageUrl }} style={styles.image} />
+                    ) : (
+                      <Ionicons
+                        name={place.purpose.includes('카페') ? 'cafe-outline' : 'image-outline'}
+                        size={23}
+                        color="#24443A"
+                      />
+                    )}
+                  </View>
+                  <View style={styles.placeBody}>
+                    <Text style={styles.placeName}>
+                      {index + 1} · {getPlaceDisplayTitle(place.title, regionName)}
+                    </Text>
+                    <Text style={styles.purpose}>{place.purpose}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={17} color="#B3AFA7" />
+                </Pressable>
                 {index < places.length - 1 && (
                   <View style={styles.leg}>
                     <Pressable
@@ -397,7 +472,12 @@ export function CoursePreviewScreen() {
                               { lat: Number(place.mapy), lng: Number(place.mapx) },
                               { lat: Number(next.mapy), lng: Number(next.mapx) },
                             ];
-                        setMapFocus({ points, key: Date.now() });
+                        setMapFocus({
+                          points,
+                          placeIds: [place.contentId, next.contentId],
+                          connection: !leg?.encodedPolyline,
+                          key: Date.now(),
+                        });
                       }}
                       accessibilityLabel={`${index + 1}번과 ${index + 2}번 사이 이동 경로 지도에서 보기`}
                     >
@@ -409,18 +489,10 @@ export function CoursePreviewScreen() {
                               ? '이동 시간 확인 중...'
                               : '이동 정보 없음'}
                         </Text>
-                        {leg && formatLegBreakdown(leg) && (
-                          <Text style={styles.legBreakdown}>{formatLegBreakdown(leg)}</Text>
-                        )}
                       </View>
-                      {leg && (
-                        <Text style={styles.distance}>
-                          {(leg.distanceMeters / 1000).toFixed(1)}km
-                        </Text>
-                      )}
                       <Ionicons name="expand-outline" size={13} color="#998354" />
                     </Pressable>
-                    {leg && (
+                    {leg && transport === '대중교통' && (
                       <Pressable
                         style={styles.legDetailButton}
                         onPress={() =>
@@ -455,67 +527,27 @@ export function CoursePreviewScreen() {
           <Text style={styles.saveText}>{saved ? '저장됨 ✓' : '저장하기'}</Text>
         </Pressable>
       </View>
-      <Modal
-        visible={detailLeg !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setDetailLeg(null)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setDetailLeg(null)}>
-          <Pressable style={styles.modalSheet} onPress={() => undefined}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleBody}>
-                <Text style={styles.modalTitle}>이동 상세</Text>
-                <Text style={styles.modalRoute} numberOfLines={1}>
-                  {detailLeg?.from} → {detailLeg?.to}
-                </Text>
-              </View>
-              <Pressable onPress={() => setDetailLeg(null)} hitSlop={10}>
-                <Ionicons name="close" size={23} color="#252725" />
-              </Pressable>
-            </View>
-            <ScrollView style={styles.stepList} showsVerticalScrollIndicator={false}>
-              {(detailLeg?.leg.steps?.length
-                ? detailLeg.leg.steps
-                : [
-                    {
-                      mode: detailLeg?.leg.mode ?? '이동',
-                      durationMinutes: detailLeg?.leg.durationMinutes ?? 0,
-                      distanceMeters: detailLeg?.leg.distanceMeters ?? 0,
-                    },
-                  ]
-              ).map((step, index) => (
-                <View key={`${step.mode}-${index}`} style={styles.stepRow}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>{index + 1}</Text>
-                  </View>
-                  <View style={styles.stepBody}>
-                    <Text style={styles.stepTitle}>
-                      {step.mode}
-                      {step.lineName ? ` ${step.lineName}` : ''} · {step.durationMinutes}분
-                    </Text>
-                    {step.departureStop && step.arrivalStop ? (
-                      <Text style={styles.stepDescription}>
-                        {step.departureStop} → {step.arrivalStop}
-                        {step.stopCount ? ` · ${step.stopCount}개 정류장` : ''}
-                      </Text>
-                    ) : step.mode === '도보' ? (
-                      <Text style={styles.stepDescription}>
-                        도보 이동 · {(step.distanceMeters / 1000).toFixed(1)}km
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-            <View style={styles.modalTotal}>
-              <Text style={styles.modalTotalLabel}>총 이동시간</Text>
-              <Text style={styles.modalTotalValue}>{detailLeg?.leg.durationMinutes}분</Text>
-            </View>
+      {Platform.OS === 'web' ? (
+        detailLeg ? (
+          <Pressable
+            style={[styles.modalBackdrop, styles.webModalBackdrop]}
+            onPress={() => setDetailLeg(null)}
+          >
+            {routeDetailSheet}
           </Pressable>
-        </Pressable>
-      </Modal>
+        ) : null
+      ) : (
+        <Modal
+          visible={detailLeg !== null}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setDetailLeg(null)}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setDetailLeg(null)}>
+            {routeDetailSheet}
+          </Pressable>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -597,10 +629,30 @@ const styles = StyleSheet.create({
   activeTab: { backgroundColor: '#FFFFFF' },
   tabText: { fontSize: 10, color: '#77766F' },
   activeText: { fontWeight: '700', color: '#24443A' },
+  mapWrap: { position: 'relative' },
+  showAllButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  showAllText: { fontSize: 10, fontWeight: '600', color: '#24443A' },
   list: { marginTop: 11 },
   placeCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 11,
     borderWidth: 1,
     borderColor: '#E4DDD5',
     borderRadius: 15,
@@ -608,21 +660,6 @@ const styles = StyleSheet.create({
     padding: 10,
     minHeight: 67,
   },
-  placeMapButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  detailButton: {
-    minWidth: 65,
-    height: 36,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-  },
-  detailText: { fontSize: 10, color: '#77766F' },
   imageWrap: {
     width: 43,
     height: 43,
@@ -657,8 +694,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: '#998354',
   },
-  legBreakdown: { marginTop: 1, fontSize: 9, lineHeight: 13, color: '#77766F' },
-  distance: { fontSize: 10, color: '#77766F' },
   legDetailButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -701,10 +736,22 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 21,
     backgroundColor: 'rgba(0,0,0,0.28)',
   },
+  webModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 100,
+  },
   modalSheet: {
-    maxHeight: '75%',
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '72%',
     paddingHorizontal: 24,
     paddingTop: 9,
     paddingBottom: 28,

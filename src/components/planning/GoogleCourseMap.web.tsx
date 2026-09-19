@@ -165,7 +165,7 @@ export function GoogleCourseMap({ places, routePaths = [], connectionPaths = [],
             anchor: new mapsApi.Point(15, 15),
             labelOrigin: new mapsApi.Point(15, 15),
           },
-          label: { text: String(index + 1), color: '#FFFFFF', fontWeight: '700' },
+          label: { text: String(place.order ?? index + 1), color: '#FFFFFF', fontWeight: '700' },
           zIndex: places.length - index,
         }),
       );
