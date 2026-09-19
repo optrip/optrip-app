@@ -309,11 +309,14 @@ export function CoursePreviewScreen() {
               <View key={place.contentId}>
                 <View style={styles.placeCard}>
                   <Pressable
-                    style={styles.placeDetailButton}
+                    style={styles.placeMapButton}
                     onPress={() =>
-                      navigation.navigate('PlaceDetail', { contentId: place.contentId })
+                      setMapFocus({
+                        points: [{ lat: Number(place.mapy), lng: Number(place.mapx) }],
+                        key: Date.now(),
+                      })
                     }
-                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 상세보기`}
+                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 지도에서 보기`}
                   >
                     <View style={styles.imageWrap}>
                       {place.imageUrl ? (
@@ -334,17 +337,15 @@ export function CoursePreviewScreen() {
                     </View>
                   </Pressable>
                   <Pressable
-                    style={styles.mapPinButton}
+                    style={styles.detailButton}
                     onPress={() =>
-                      setMapFocus({
-                        points: [{ lat: Number(place.mapy), lng: Number(place.mapx) }],
-                        key: Date.now(),
-                      })
+                      navigation.navigate('PlaceDetail', { contentId: place.contentId })
                     }
                     hitSlop={8}
-                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 지도에서 보기`}
+                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 상세보기`}
                   >
-                    <Ionicons name="locate-outline" size={20} color="#24443A" />
+                    <Text style={styles.detailText}>상세보기</Text>
+                    <Ionicons name="chevron-forward" size={14} color="#77766F" />
                   </Pressable>
                 </View>
                 {index < places.length - 1 && (
@@ -486,20 +487,21 @@ const styles = StyleSheet.create({
     padding: 10,
     minHeight: 67,
   },
-  placeDetailButton: {
+  placeMapButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
   },
-  mapPinButton: {
-    width: 36,
+  detailButton: {
+    minWidth: 65,
     height: 36,
-    borderRadius: 18,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F4EF',
+    gap: 1,
   },
+  detailText: { fontSize: 10, color: '#77766F' },
   imageWrap: {
     width: 43,
     height: 43,
