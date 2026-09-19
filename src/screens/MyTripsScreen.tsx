@@ -40,6 +40,7 @@ export const MyTripsScreen = () => {
               onPress={() =>
                 navigation.navigate('CourseDetail', {
                   courseIndex: 0,
+                  savedTripId: trip.id,
                   savedCourse: trip.course,
                   savedRegionName: trip.regionName,
                 })

@@ -34,7 +34,7 @@ type Transport = ItineraryRequest['transport'];
 function formatLegSummary(leg: ItineraryLeg) {
   const steps = leg.steps ?? [];
   if (!steps.length || leg.mode === '자동차') {
-    return `${leg.mode} ${Math.max(1, Math.round(leg.durationMinutes))}분`;
+    return `${leg.mode} ${formatDuration(leg.durationMinutes)}`;
   }
   const walk = steps
     .filter((step) => step.mode === '도보')
@@ -43,9 +43,9 @@ function formatLegSummary(leg: ItineraryLeg) {
     .filter((step) => step.mode === '버스' || step.mode === '지하철')
     .reduce((sum, step) => sum + step.durationMinutes, 0);
   const parts = [];
-  if (transit) parts.push(`대중교통 ${transit}분`);
-  if (walk) parts.push(`도보 ${walk}분`);
-  return parts.join(' · ') || `${leg.mode} ${Math.max(1, Math.round(leg.durationMinutes))}분`;
+  if (transit) parts.push(`대중교통 ${formatDuration(transit)}`);
+  if (walk) parts.push(`도보 ${formatDuration(walk)}`);
+  return parts.join(' · ') || `${leg.mode} ${formatDuration(leg.durationMinutes)}`;
 }
 
 function formatDuration(minutes: number) {
@@ -223,6 +223,17 @@ export function CoursePreviewScreen() {
       desc: `${plan.selectedPlaceIds.length}곳 · ${transport}`,
       image: allPlaces.find((p) => p.imageUrl)?.imageUrl ?? '',
       regionName,
+      placeDays: scheduledDays,
+      initialTransport: transport,
+      itineraries: {
+        [transport]: itinerary,
+        ...(itineraryCache.current.get(`${scheduleKey}:대중교통`)
+          ? { 대중교통: itineraryCache.current.get(`${scheduleKey}:대중교통`)! }
+          : {}),
+        ...(itineraryCache.current.get(`${scheduleKey}:자동차`)
+          ? { 자동차: itineraryCache.current.get(`${scheduleKey}:자동차`)! }
+          : {}),
+      },
       course: {
         purpose: '직접 고른 여행',
         title,
