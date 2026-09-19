@@ -1,5 +1,36 @@
 {
   "expo": {
+    "name": "OPTRIP",
+    "slug": "optrip-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "kr.co.optrip.app"
+    },
+    "android": {
+      "package": "kr.co.optrip.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "baseUrl": "/optrip-app"
+    },
     "extra": {
       "eas": {
         "projectId": "4c6ec320-cdfb-4aec-a84f-6a29bc0162c9"
@@ -12,13 +43,6 @@
     "updates": {
       "url": "https://u.expo.dev/4c6ec320-cdfb-4aec-a84f-6a29bc0162c9"
     },
-    "android": {},
-    "ios": {},
-    "experiments": {
-      "baseUrl": "/optrip-app"
-    },
-    "plugins": [
-      "expo-asset"
-    ]
+    "plugins": ["expo-asset"]
   }
 }
