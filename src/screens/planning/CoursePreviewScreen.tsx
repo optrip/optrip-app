@@ -251,6 +251,20 @@ export function CoursePreviewScreen() {
     setSaved(true);
   };
 
+  const detailSteps = detailLeg?.leg.steps?.length
+    ? mergeRouteSteps(detailLeg.leg.steps)
+    : [
+        {
+          mode: detailLeg?.leg.mode ?? '이동',
+          durationMinutes: detailLeg?.leg.durationMinutes ?? 0,
+          distanceMeters: detailLeg?.leg.distanceMeters ?? 0,
+        },
+      ];
+  const displayedDetailTotal = detailSteps.reduce(
+    (total, step) => total + Math.max(1, Math.round(step.durationMinutes)),
+    0,
+  );
+
   const routeDetailSheet = (
     <Pressable style={styles.modalSheet} onPress={() => undefined}>
       <View style={styles.modalHandle} />
@@ -266,16 +280,7 @@ export function CoursePreviewScreen() {
         </Pressable>
       </View>
       <ScrollView style={styles.stepList} showsVerticalScrollIndicator={false}>
-        {(detailLeg?.leg.steps?.length
-          ? mergeRouteSteps(detailLeg.leg.steps)
-          : [
-              {
-                mode: detailLeg?.leg.mode ?? '이동',
-                durationMinutes: detailLeg?.leg.durationMinutes ?? 0,
-                distanceMeters: detailLeg?.leg.distanceMeters ?? 0,
-              },
-            ]
-        ).map((step, index) => (
+        {detailSteps.map((step, index) => (
           <View key={`${step.mode}-${index}`} style={styles.stepRow}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>{index + 1}</Text>
@@ -301,9 +306,7 @@ export function CoursePreviewScreen() {
       </ScrollView>
       <View style={styles.modalTotal}>
         <Text style={styles.modalTotalLabel}>총 이동시간</Text>
-        <Text style={styles.modalTotalValue}>
-          {formatDuration(detailLeg?.leg.durationMinutes ?? 0)}
-        </Text>
+        <Text style={styles.modalTotalValue}>{formatDuration(displayedDetailTotal)}</Text>
       </View>
     </Pressable>
   );
