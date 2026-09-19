@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import {
   type ItineraryRequest,
 } from '../../api/itinerary';
 import { decodeGooglePolyline } from '../../api/routes';
+import type { RoutePoint } from '../../api/routes';
 import { useOnboarding } from '../../lib/onboardingStore';
 import { usePlanning } from '../../lib/planningStore';
 import { getPlanningDays, reconcilePlaceDays } from '../../lib/placeSchedule';
@@ -46,9 +47,15 @@ export function CoursePreviewScreen() {
   const [retry, setRetry] = useState(0);
   const [transport, setTransport] = useState<Transport>('대중교통');
   const [transportOpen, setTransportOpen] = useState(false);
+  const [mapFocus, setMapFocus] = useState<{ points: RoutePoint[]; key: number } | null>(null);
+  const itineraryCache = useRef(new Map<string, ItineraryResponse>());
   const scheduledDays = useMemo(
     () => reconcilePlaceDays(plan.selectedPlaceIds, dayCount, plan.selectedPlaceDays),
     [plan.selectedPlaceIds, dayCount, plan.selectedPlaceDays],
+  );
+  const scheduleKey = useMemo(
+    () => scheduledDays.map((day) => day.join(',')).join('|'),
+    [scheduledDays],
   );
   const allPlaces = useMemo(
     () => [
@@ -112,13 +119,27 @@ export function CoursePreviewScreen() {
   }, [dayCount, selectedDay]);
   useEffect(() => {
     let active = true;
+    const cacheKey = `${scheduleKey}:${transport}`;
+    const cached = itineraryCache.current.get(cacheKey);
+    if (cached) {
+      setItinerary(cached);
+      setLoading(false);
+      setError(null);
+      setSaved(false);
+      return () => {
+        active = false;
+      };
+    }
     setLoading(true);
     setError(null);
     setItinerary(null);
     setSaved(false);
     createScheduledItinerary(scheduledDays, transport)
       .then((result) => {
-        if (active) setItinerary(result);
+        if (active) {
+          itineraryCache.current.set(cacheKey, result);
+          setItinerary(result);
+        }
       })
       .catch((reason: unknown) => {
         if (active)
@@ -130,7 +151,7 @@ export function CoursePreviewScreen() {
     return () => {
       active = false;
     };
-  }, [scheduledDays, transport, retry]);
+  }, [scheduledDays, scheduleKey, transport, retry]);
   const save = () => {
     if (!itinerary || saved) return;
     const title = `${regionName} · ${duration}`;
@@ -221,6 +242,7 @@ export function CoursePreviewScreen() {
                     onPress={() => {
                       setTransport(option);
                       setTransportOpen(false);
+                      setMapFocus(null);
                     }}
                     accessibilityRole="menuitem"
                   >
@@ -246,7 +268,10 @@ export function CoursePreviewScreen() {
           {scheduledDays.map((_, index) => (
             <Pressable
               key={index}
-              onPress={() => setSelectedDay(index)}
+              onPress={() => {
+                setSelectedDay(index);
+                setMapFocus(null);
+              }}
               style={[
                 styles.tab,
                 dayCount <= 4 && styles.equalTab,
@@ -265,6 +290,7 @@ export function CoursePreviewScreen() {
           places={mapPlaces}
           routePaths={routePaths}
           connectionPaths={connectionPaths}
+          focus={mapFocus}
         />
         {loading && <Text style={styles.status}>{transport} 경로를 확인하고 있어요.</Text>}
         {error && (
@@ -281,30 +307,61 @@ export function CoursePreviewScreen() {
             const leg = items.find((item) => item.place.contentId === place.contentId)?.legToNext;
             return (
               <View key={place.contentId}>
-                <Pressable
-                  style={styles.placeCard}
-                  onPress={() => navigation.navigate('PlaceDetail', { contentId: place.contentId })}
-                >
-                  <View style={styles.imageWrap}>
-                    {place.imageUrl ? (
-                      <Image source={{ uri: place.imageUrl }} style={styles.image} />
-                    ) : (
-                      <Ionicons
-                        name={place.purpose.includes('카페') ? 'cafe-outline' : 'image-outline'}
-                        size={23}
-                        color="#24443A"
-                      />
-                    )}
-                  </View>
-                  <View style={styles.placeBody}>
-                    <Text style={styles.placeName}>
-                      {index + 1} · {getPlaceDisplayTitle(place.title, regionName)}
-                    </Text>
-                    <Text style={styles.purpose}>{place.purpose}</Text>
-                  </View>
-                </Pressable>
+                <View style={styles.placeCard}>
+                  <Pressable
+                    style={styles.placeDetailButton}
+                    onPress={() =>
+                      navigation.navigate('PlaceDetail', { contentId: place.contentId })
+                    }
+                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 상세보기`}
+                  >
+                    <View style={styles.imageWrap}>
+                      {place.imageUrl ? (
+                        <Image source={{ uri: place.imageUrl }} style={styles.image} />
+                      ) : (
+                        <Ionicons
+                          name={place.purpose.includes('카페') ? 'cafe-outline' : 'image-outline'}
+                          size={23}
+                          color="#24443A"
+                        />
+                      )}
+                    </View>
+                    <View style={styles.placeBody}>
+                      <Text style={styles.placeName}>
+                        {index + 1} · {getPlaceDisplayTitle(place.title, regionName)}
+                      </Text>
+                      <Text style={styles.purpose}>{place.purpose}</Text>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    style={styles.mapPinButton}
+                    onPress={() =>
+                      setMapFocus({
+                        points: [{ lat: Number(place.mapy), lng: Number(place.mapx) }],
+                        key: Date.now(),
+                      })
+                    }
+                    hitSlop={8}
+                    accessibilityLabel={`${getPlaceDisplayTitle(place.title, regionName)} 지도에서 보기`}
+                  >
+                    <Ionicons name="locate-outline" size={20} color="#24443A" />
+                  </Pressable>
+                </View>
                 {index < places.length - 1 && (
-                  <View style={styles.leg}>
+                  <Pressable
+                    style={styles.leg}
+                    onPress={() => {
+                      const next = places[index + 1];
+                      const points = leg?.encodedPolyline
+                        ? decodeGooglePolyline(leg.encodedPolyline)
+                        : [
+                            { lat: Number(place.mapy), lng: Number(place.mapx) },
+                            { lat: Number(next.mapy), lng: Number(next.mapx) },
+                          ];
+                      setMapFocus({ points, key: Date.now() });
+                    }}
+                    accessibilityLabel={`${index + 1}번과 ${index + 2}번 사이 이동 경로 지도에서 보기`}
+                  >
                     <Text style={styles.legText}>
                       {leg
                         ? formatLegSummary(leg)
@@ -317,7 +374,8 @@ export function CoursePreviewScreen() {
                         {(leg.distanceMeters / 1000).toFixed(1)}km
                       </Text>
                     )}
-                  </View>
+                    <Ionicons name="expand-outline" size={13} color="#998354" />
+                  </Pressable>
                 )}
               </View>
             );
@@ -421,13 +479,26 @@ const styles = StyleSheet.create({
   placeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
     borderWidth: 1,
     borderColor: '#E4DDD5',
     borderRadius: 15,
     backgroundColor: '#FFFFFF',
     padding: 10,
     minHeight: 67,
+  },
+  placeDetailButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  mapPinButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F4EF',
   },
   imageWrap: {
     width: 43,

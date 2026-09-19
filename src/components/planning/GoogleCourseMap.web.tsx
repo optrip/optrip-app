@@ -8,6 +8,7 @@ type Props = {
   places: CourseMapPlace[];
   routePaths?: RoutePoint[][];
   connectionPaths?: RoutePoint[][];
+  focus?: { points: RoutePoint[]; key: number } | null;
 };
 
 type MapInstance = {
@@ -54,7 +55,7 @@ function loadGoogleMaps(apiKey: string) {
   return window.__optripGoogleMapsPromise;
 }
 
-export function GoogleCourseMap({ places, routePaths = [], connectionPaths = [] }: Props) {
+export function GoogleCourseMap({ places, routePaths = [], connectionPaths = [], focus }: Props) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const overlaysRef = useRef<MapOverlay[]>([]);
@@ -179,6 +180,19 @@ export function GoogleCourseMap({ places, routePaths = [], connectionPaths = [] 
 
     overlaysRef.current = overlays;
   }, [mapsApi, places, routePaths, connectionPaths]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapsApi || !map || !focus?.points.length) return;
+    if (focus.points.length === 1) {
+      map.setCenter(focus.points[0]);
+      map.setZoom(15);
+      return;
+    }
+    const bounds = new mapsApi.LatLngBounds();
+    focus.points.forEach((point) => bounds.extend(point));
+    map.fitBounds(bounds, 54);
+  }, [mapsApi, focus]);
 
   if (!apiKey) {
     return (

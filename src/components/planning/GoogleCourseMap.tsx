@@ -13,6 +13,7 @@ type Props = {
   places: CourseMapPlace[];
   routePaths?: RoutePoint[][];
   connectionPaths?: RoutePoint[][];
+  focus?: { points: RoutePoint[]; key: number } | null;
 };
 
 export function GoogleCourseMap({ places }: Props) {
