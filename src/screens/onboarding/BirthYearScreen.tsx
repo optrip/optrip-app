@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useOnboarding } from '../../lib/onboardingStore';
@@ -81,7 +82,7 @@ export function BirthYearScreen() {
             activeOpacity={0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.backText}>‹</Text>
+            <Ionicons name="chevron-back" size={28} color="#252725" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>기본 정보 · 선택</Text>
         </View>
@@ -166,12 +167,6 @@ const styles = StyleSheet.create({
   backButton: {
     paddingRight: 6,
     paddingVertical: 2,
-  },
-  backText: {
-    fontSize: 28,
-    color: '#333333',
-    lineHeight: 28,
-    fontWeight: '300',
   },
   headerTitle: {
     fontSize: 14,

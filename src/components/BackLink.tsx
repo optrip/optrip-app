@@ -1,26 +1,28 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-import { colors, spacing } from '../lib/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export function BackLink() {
   const navigation = useNavigation();
   if (!navigation.canGoBack()) return null;
   return (
-    <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.wrap}>
-      <Text style={styles.text}>이전</Text>
+    <Pressable
+      onPress={() => navigation.goBack()}
+      hitSlop={8}
+      style={styles.wrap}
+      accessibilityRole="button"
+      accessibilityLabel="뒤로 가기"
+    >
+      <Ionicons name="chevron-back" size={28} color="#252725" />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingVertical: spacing.sm,
-  },
-  text: {
-    fontSize: 20,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

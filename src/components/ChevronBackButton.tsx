@@ -13,7 +13,7 @@ export function ChevronBackButton() {
       accessibilityRole="button"
       accessibilityLabel="뒤로 가기"
     >
-      <Ionicons name="chevron-back" size={26} color="#252725" />
+      <Ionicons name="chevron-back" size={28} color="#252725" />
     </Pressable>
   );
 }

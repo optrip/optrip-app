@@ -29,7 +29,7 @@ export function CourseListScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconBtn}>
-          <Ionicons name="chevron-back" size={26} color={colors.textStrong} />
+          <Ionicons name="chevron-back" size={28} color={colors.textStrong} />
         </Pressable>
         <Pressable onPress={goHome} hitSlop={12} style={styles.iconBtn}>
           <Ionicons name="home-outline" size={24} color={colors.textStrong} />

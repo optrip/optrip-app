@@ -337,7 +337,7 @@ export function CoursePreviewScreen() {
           hitSlop={12}
           accessibilityLabel="선택한 장소 수정"
         >
-          <Ionicons name="chevron-back" size={26} color="#252725" />
+          <Ionicons name="chevron-back" size={28} color="#252725" />
         </Pressable>
         <Text style={styles.headerText}>최종 일정</Text>
         <Pressable

@@ -130,7 +130,7 @@ export function DestinationScreen() {
               style={styles.headerButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.backText}>‹</Text>
+              <Ionicons name="chevron-back" size={28} color="#252725" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -344,12 +344,6 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 4,
-  },
-  backText: {
-    fontSize: 28,
-    color: '#333333',
-    lineHeight: 28,
-    fontWeight: '300',
   },
   scrollContent: {
     paddingBottom: 20,

@@ -32,7 +32,7 @@ export default function EditProfileScreen({ route, navigation }: any) {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
           <View style={styles.navBar}>
-            <TouchableOpacity onPress={() => navigation.goBack()}><Ionicons name="chevron-back" size={26} color="#252725" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.goBack()}><Ionicons name="chevron-back" size={28} color="#252725" /></TouchableOpacity>
             <Text style={styles.navTitle}>내 정보 수정하기</Text><View style={{ width: 24 }} />
           </View>
           <View style={styles.formContainer}>

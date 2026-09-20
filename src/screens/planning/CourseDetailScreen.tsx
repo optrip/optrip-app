@@ -161,7 +161,7 @@ export function CourseDetailScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={26} color="#252725" />
+          <Ionicons name="chevron-back" size={28} color="#252725" />
         </Pressable>
         <Text style={styles.headerText}>저장한 여행</Text>
         <Pressable

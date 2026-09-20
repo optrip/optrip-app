@@ -77,7 +77,7 @@ export function PlaceDetailScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityLabel="뒤로 가기">
-          <Ionicons name="chevron-back" size={26} color="#252725" />
+          <Ionicons name="chevron-back" size={28} color="#252725" />
         </Pressable>
         <Text style={styles.headerTitle}>장소 상세</Text>
         <Pressable

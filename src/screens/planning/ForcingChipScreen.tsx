@@ -46,7 +46,7 @@ export default function PreferenceScreen() {
         {/* 상단 헤더 & 프로그래스 바 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={26} color="#252725" />
+            <Ionicons name="chevron-back" size={28} color="#252725" />
           </TouchableOpacity>
           <View style={styles.progressBarBackground}>
             <View style={[styles.progressBarFill, { width: '60%' }]} />
