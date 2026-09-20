@@ -41,7 +41,7 @@ export function RegionDetailScreen() {
           style={styles.iconButton}
           accessibilityLabel="뒤로 가기"
         >
-          <Ionicons name="chevron-back" size={27} color="#252725" />
+          <Ionicons name="chevron-back" size={26} color="#252725" />
         </Pressable>
         <Text style={styles.headerTitle}>자세히 보기</Text>
         <Pressable

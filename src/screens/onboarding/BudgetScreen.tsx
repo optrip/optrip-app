@@ -34,7 +34,7 @@ export const BudgetScreen = () => {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* 뒤로가기 버튼 */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="chevron-back" size={28} color="black" />
+        <Ionicons name="chevron-back" size={26} color="#252725" />
       </TouchableOpacity>
 
       <View style={styles.container}>

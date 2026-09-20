@@ -113,7 +113,9 @@ export const HomeScreen = () => {
       </ScrollView>
 
       {/* 하단 네비게이션 바 */}
-      <View style={[styles.bottomNav, { paddingBottom: 8 + insets.bottom }]}>
+      <View
+        style={[styles.bottomNav, { height: 68 + insets.bottom, paddingBottom: insets.bottom }]}
+      >
         {/* 좌측 */}
         <TouchableOpacity style={styles.navItem} activeOpacity={1}>
           <View style={styles.activeIconBg}>
@@ -247,14 +249,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomNav: {
-    height: 68,
     backgroundColor: '#F9F8F4',
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 0, 0, 0.05)',
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingBottom: 8,
   },
   navItem: {
     alignItems: 'center',

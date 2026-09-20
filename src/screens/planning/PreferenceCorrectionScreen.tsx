@@ -56,7 +56,7 @@ export function PreferenceCorrectionScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconButton}>
-          <Ionicons name="chevron-back" size={22} color="#262B28" />
+          <Ionicons name="chevron-back" size={26} color="#252725" />
         </Pressable>
         <Text style={styles.headerTitle}>취향 다시 고르기</Text>
         <Pressable

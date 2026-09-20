@@ -18,7 +18,7 @@ export function RegionCandidatesPlaceholderScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.iconButton}>
-          <Ionicons name="chevron-back" size={32} color="#222222" />
+          <Ionicons name="chevron-back" size={26} color="#252725" />
         </Pressable>
         <Pressable
           onPress={() => navigation.navigate('Home')}

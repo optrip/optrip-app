@@ -1,35 +1,28 @@
-import { Pressable, View, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-import { spacing } from '../lib/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export function ChevronBackButton() {
   const navigation = useNavigation();
   if (!navigation.canGoBack()) return null;
   return (
-    <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={styles.wrap}>
-      <View style={styles.chevron} />
+    <Pressable
+      onPress={() => navigation.goBack()}
+      hitSlop={8}
+      style={styles.wrap}
+      accessibilityRole="button"
+      accessibilityLabel="뒤로 가기"
+    >
+      <Ionicons name="chevron-back" size={26} color="#252725" />
     </Pressable>
   );
 }
 
-const SIZE = 14;
-
 const styles = StyleSheet.create({
   wrap: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xs,
-  },
-  chevron: {
-    width: SIZE,
-    height: SIZE,
-    borderLeftWidth: 3,
-    borderBottomWidth: 3,
-    borderColor: '#000',
-    transform: [{ rotate: '45deg' }],
-    marginLeft: 6,
   },
 });

@@ -231,7 +231,7 @@ export function SelectionReviewScreen() {
     >
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityLabel="뒤로 가기">
-          <Ionicons name="chevron-back" size={25} color="#252725" />
+          <Ionicons name="chevron-back" size={26} color="#252725" />
         </Pressable>
         <Pressable
           onPress={() => navigation.navigate('Home')}
