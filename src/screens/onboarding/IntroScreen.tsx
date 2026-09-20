@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Animated,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing } from '../../lib/theme';
 
@@ -25,7 +25,7 @@ export function IntroScreen() {
   }, [opacity]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Animated.View style={[styles.content, { opacity }]}>
         {/* 상단 헤더 영역 */}
         <View style={styles.header}>

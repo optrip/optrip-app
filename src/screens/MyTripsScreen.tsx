@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   ImageBackground,
-  SafeAreaView,
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../lib/onboardingStore';
@@ -21,7 +21,7 @@ export const MyTripsScreen = () => {
   const { savedTrips } = useOnboarding();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
       </View>

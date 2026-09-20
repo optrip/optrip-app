@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../lib/onboardingStore';
 
@@ -26,6 +27,7 @@ export default function EditProfileScreen({ route, navigation }: any) {
   };
 
   return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
@@ -65,6 +67,7 @@ export default function EditProfileScreen({ route, navigation }: any) {
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
