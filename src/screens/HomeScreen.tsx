@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +37,7 @@ export const HomeScreen = () => {
   const { profile } = useOnboarding();
   const { reset } = usePlanning();
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
 
   // 메인 카드 배경 이미지 상태
   const [mainBg, setMainBg] = useState(MAIN_BG_CANDIDATES[0]);
@@ -58,7 +59,7 @@ export const HomeScreen = () => {
   const userName = profile.name ? `${profile.name}님` : '승희님';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* 상단 헤더 */}
       <View style={styles.header}>
         <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
@@ -112,7 +113,7 @@ export const HomeScreen = () => {
       </ScrollView>
 
       {/* 하단 네비게이션 바 */}
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { paddingBottom: 8 + insets.bottom }]}>
         {/* 좌측 */}
         <TouchableOpacity style={styles.navItem} activeOpacity={1}>
           <View style={styles.activeIconBg}>

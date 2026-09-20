@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   ImageBackground,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -19,6 +19,7 @@ export const MyPageScreen = () => {
   const navigation = useNavigation<any>();
   const { profile, savedTrips } = useOnboarding();
   const { reset } = usePlanning();
+  const insets = useSafeAreaInsets();
 
   const startPlanning = () => {
     reset();
@@ -38,7 +39,7 @@ export const MyPageScreen = () => {
   const userName = profile.name ? `${profile.name} 님` : '승희 님';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -109,7 +110,7 @@ export const MyPageScreen = () => {
       </ScrollView>
 
       {/* 하단 네비게이션 바 */}
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { paddingBottom: 8 + insets.bottom }]}>
         {/* 좌측 */}
         <TouchableOpacity
           style={styles.navItem}
